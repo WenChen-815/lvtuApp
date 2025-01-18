@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Fill the entire shape with a white color -->
+    <item>
+        <shape>
+            <solid android:color="#F1F0F0" />
+        </shape>
+    </item>
+
+    <!-- Draw a thin bottom border with a different color -->
+    <item android:bottom="1dp">
+        <shape>
+            <solid android:color="#FEFEFE" />
+        </shape>
+    </item>
+</layer-list>

@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#ECECEC"
+    android:orientation="vertical"
+    tools:context=".personal.PersonalInfoActivity">
+    <RelativeLayout
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="#ECECEC"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingBottom="10dp">
+
+        <ImageView
+            android:id="@+id/img_back"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_alignParentBottom="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/back" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="修改个人信息"
+            android:layout_alignParentBottom="true"
+            android:textStyle="bold"
+            android:textColor="#0c0c0c"
+            android:textSize="18sp" />
+        <TextView
+            android:id="@+id/txt_save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_alignParentBottom="true"
+            android:text="保存"
+            android:textColor="#2196F3"
+            android:textSize="16sp"/>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:padding="10dp"
+        android:id="@+id/rltl_choose_avatar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="7dp"
+        android:background="@drawable/background_frame_underline"
+        >
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="头像"
+            android:textSize="16sp"
+            android:textColor="#0c0c0c"
+            android:layout_centerVertical="true"
+            />
+        <ImageView
+            android:id="@+id/img_avatar"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            />
+    </RelativeLayout>
+
+
+
+    <RelativeLayout
+        android:padding="10dp"
+        android:id="@+id/rltl_choose_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/background_frame_underline">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="昵称"
+            android:textSize="16sp"
+            android:textColor="#0c0c0c"/>
+        <EditText
+            android:id="@+id/edt_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:gravity="end"
+            android:background="@null"
+            android:textSize="16sp"
+            android:textColor="#0c0c0c"
+            android:hint="请输入昵称"/>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rltl_choose_sex"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/background_frame_underline"
+        android:padding="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="性别"
+            android:textColor="#0c0c0c"
+            android:textSize="16sp" />
+
+        <Spinner
+            android:id="@+id/sp_gender"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:text="未知"
+            android:textColor="#0c0c0c"
+            android:textSize="16sp" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:padding="10dp"
+        android:id="@+id/rltl_birth"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginBottom="7dp"
+        android:background="@drawable/background_frame_underline">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="出生日期"
+            android:textSize="16sp"
+            android:textColor="#0c0c0c"/>
+        <EditText
+            android:id="@+id/edt_birth"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:background="@null"
+            android:hint="选择出生日期"
+            android:textSize="16sp"
+            android:textColor="#0c0c0c"
+            android:focusable="false"
+            android:clickable="true"
+            android:cursorVisible="false" />
+    </RelativeLayout>
+    <RelativeLayout
+        android:padding="10dp"
+        android:id="@+id/rltl_email"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@drawable/background_frame_underline">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="邮箱"
+            android:textSize="16sp"
+            android:textColor="#0c0c0c"/>
+        <EditText
+            android:id="@+id/edt_email"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:background="@null"
+            android:hint="输入邮箱"
+            android:textSize="16sp"
+            android:textColor="#0c0c0c"/>
+    </RelativeLayout>
+</LinearLayout>
