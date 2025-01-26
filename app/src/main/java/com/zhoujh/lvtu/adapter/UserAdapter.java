@@ -9,12 +9,16 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CircleCrop;
+import com.bumptech.glide.request.RequestOptions;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.model.UserInfo;
@@ -64,7 +68,13 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
                     break;
             }
         });
-        // TODO 加载用户头像
+        RequestOptions requestOptions = new RequestOptions()
+                .transform(new CircleCrop());
+        Glide.with(context)
+                .load("http://"+MainActivity.IP + userInfo.getAvatarUrl())
+                .placeholder(R.drawable.headimg)  // 设置占位图
+                .apply(requestOptions)// 设置签名
+                .into(holder.imgAvatar);
     }
 
     private void updateFollow(UserViewHolder holder, UserInfo userInfo, int newRelationship,int position) {
@@ -105,11 +115,12 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
 
     static class UserViewHolder extends RecyclerView.ViewHolder {
         TextView userName, followState;
-
+        ImageView imgAvatar;
         public UserViewHolder(@NonNull View itemView) {
             super(itemView);
             userName = itemView.findViewById(R.id.user_name);
             followState = itemView.findViewById(R.id.follow_state);
+            imgAvatar = itemView.findViewById(R.id.user_avatar);
         }
     }
 

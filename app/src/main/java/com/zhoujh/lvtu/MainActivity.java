@@ -1,11 +1,13 @@
 package com.zhoujh.lvtu;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,6 +17,7 @@ import android.widget.Toast;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.hyphenate.EMCallBack;
 import com.hyphenate.EMConnectionListener;
 import com.hyphenate.EMError;
@@ -24,18 +27,21 @@ import com.hyphenate.chat.EMClient;
 import com.hyphenate.chat.EMOptions;
 import com.hyphenate.chat.EMUserInfo;
 import com.hyphenate.exceptions.HyphenateException;
-import com.zhoujh.lvtu.Utils.StatusBarUtils;
+import com.zhoujh.lvtu.utils.LocalDateTimeAdapter;
+import com.zhoujh.lvtu.utils.StatusBarUtils;
 import com.zhoujh.lvtu.login.LoginActivity;
 import com.zhoujh.lvtu.model.User;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.time.LocalDateTime;
 
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "MainActivity";
     public static final String IP = "192.168.110.97:8080";
     public static String USER_ID = "userId";
     public static User user;
-    private final Gson gson = new Gson();
+    public static final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+            .create();
     private BottomNavigationView bottomNavigationView;
     private EMMessageListener msgListener;
 
@@ -43,6 +49,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
 
         // 权限申请
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -69,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(this, LoginActivity.class);
             startActivity(intent);
         } else{
+            Log.e(TAG, "user: " + getIntent().getStringExtra("user"));
             user = gson.fromJson(getIntent().getStringExtra("user"), User.class);
             USER_ID = user.getUserId();
             initView();

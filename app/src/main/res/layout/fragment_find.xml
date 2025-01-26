@@ -3,12 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/root_find_fragment"
     tools:context=".FindFragment">
-
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+    <Button
+        android:id="@+id/to_add_post"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="添加帖子"/>
 
 </FrameLayout>

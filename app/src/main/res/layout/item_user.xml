@@ -6,7 +6,7 @@
     android:padding="8dp">
 
     <ImageView
-        android:id="@+id/follow_item_avatar"
+        android:id="@+id/user_avatar"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_centerVertical="true"
@@ -19,7 +19,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
-        android:layout_toEndOf="@+id/follow_item_avatar"
+        android:layout_toEndOf="@+id/user_avatar"
         android:text="userName"
         android:textColor="#181A23"
         android:textSize="15sp"

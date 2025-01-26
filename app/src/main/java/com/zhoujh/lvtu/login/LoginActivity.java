@@ -32,12 +32,11 @@ import okhttp3.ResponseBody;
 public class LoginActivity extends AppCompatActivity {
     private final String TAG = "LoginActivity";
     private final String loginUrl = "http://"+ MainActivity.IP +"/lvtu/user/registerAndLogin"; // 后端登录接口URL
-    private final Gson gson = new Gson();
+    private final Gson gson = MainActivity.gson;
     private User user;
     private EditText etPhoneNum;
     private EditText etPassword;
     private Button btnLogin;
-    private TextView tvInfo;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

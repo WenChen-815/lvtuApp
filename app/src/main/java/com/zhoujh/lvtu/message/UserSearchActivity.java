@@ -16,10 +16,9 @@ import com.scwang.smart.refresh.layout.listener.OnLoadMoreListener;
 import com.scwang.smart.refresh.layout.listener.OnRefreshListener;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
-import com.zhoujh.lvtu.Utils.StatusBarUtils;
+import com.zhoujh.lvtu.utils.StatusBarUtils;
 import com.zhoujh.lvtu.adapter.UserAdapter;
 import com.zhoujh.lvtu.model.PageResponse;
-import com.zhoujh.lvtu.model.User;
 import com.zhoujh.lvtu.model.UserInfo;
 
 import java.io.IOException;
@@ -27,10 +26,8 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class UserSearchActivity extends AppCompatActivity {
@@ -41,7 +38,7 @@ public class UserSearchActivity extends AppCompatActivity {
     private UserAdapter userAdapter;
     private List<UserInfo> userInfoList = new ArrayList<>();
     private OkHttpClient okHttpClient = new OkHttpClient();
-    private Gson gson = new Gson();
+    private final Gson gson = MainActivity.gson;
 
     private int currentPage = 1;
     private int totalPages = 1;
@@ -58,7 +55,8 @@ public class UserSearchActivity extends AppCompatActivity {
         searchText = findViewById(R.id.et_searchtext);
         searchText.setOnEditorActionListener((v, actionId, event) -> {
             if(actionId == EditorInfo.IME_ACTION_SEARCH){
-                loadUserData(v.getText().toString(), currentPage, 10);
+                userInfoList.clear(); // 清空原有数据
+                loadUserData(v.getText().toString(), currentPage, 20);
                 return true;
             }
             return false;
@@ -112,6 +110,8 @@ public class UserSearchActivity extends AppCompatActivity {
                     if (pageResponse != null) {
                         runOnUiThread(() -> {
                             userInfoList.addAll(pageResponse.getRecords());
+                            // 移除自己
+                            userInfoList.removeIf(userInfo -> userInfo.getUserId().equals(MainActivity.USER_ID));
                             currentPage = pageResponse.getCurrent();
                             totalPages = pageResponse.getPages();
                             userAdapter.notifyDataSetChanged();

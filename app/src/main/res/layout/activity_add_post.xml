@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".find.AddPostActivity">
+  <RelativeLayout
+      android:layout_width="match_parent"
+      android:layout_height="match_parent">
+    <RelativeLayout
+        android:id="@+id/post_edit_top"
+        android:layout_alignParentTop="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+      <ImageView
+          android:id="@+id/post_back_btn"
+          android:layout_width="30dp"
+          android:layout_height="30dp"
+          android:layout_centerVertical="true"
+          android:src="@drawable/back" />
+
+      <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_centerInParent="true"
+          android:text="图文"
+
+          android:textColor="#0c0c0c"
+          android:textSize="18dp"
+          android:textStyle="bold" />
+      <TextView
+          android:id="@+id/post_upload_btn"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_centerVertical="true"
+          android:layout_alignParentEnd="true"
+          android:textSize="16sp"
+          android:layout_marginEnd="15dp"
+          android:textColor="#2196F3"
+          android:text="提交"/>
+
+    </RelativeLayout>
+
+    <HorizontalScrollView
+        android:id="@+id/scroll"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:layout_below="@+id/post_edit_top"
+        android:layout_marginTop="0dp">
+
+      <LinearLayout
+          android:id="@+id/imageContainer"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:orientation="horizontal"
+          android:padding="8dp">
+
+        <ImageView
+            android:id="@+id/input_image"
+            android:layout_width="130dp"
+            android:layout_height="130dp"
+            android:paddingLeft="10dp"
+            android:src="@drawable/add_image" />
+
+      </LinearLayout>
+
+    </HorizontalScrollView>
+
+    <LinearLayout
+        android:id="@+id/input_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/scroll"
+        android:layout_marginBottom="40dp"
+        android:orientation="vertical">
+
+      <EditText
+          android:id="@+id/input_title"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:background="@drawable/edittext_underline"
+          android:layout_marginBottom="10dp"
+          android:textColorHighlight="#99CCFF"
+          android:textCursorDrawable="@drawable/cursor_style"
+          android:gravity="left"
+          android:hint="标题（必填）"
+          android:paddingLeft="10dp" />
+
+      <EditText
+          android:id="@+id/input_content"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:background="@android:color/transparent"
+          android:gravity="left|top"
+          android:hint="请尽情发挥吧…"
+          android:lineSpacingMultiplier="1.3"
+          android:paddingLeft="10dp"
+          android:textColorHighlight="#99CCFF"
+          android:textCursorDrawable="@drawable/cursor_style" />
+    </LinearLayout>
+  </RelativeLayout>
+  </androidx.coordinatorlayout.widget.CoordinatorLayout>

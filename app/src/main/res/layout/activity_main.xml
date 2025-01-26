@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:id="@+id/main"
     tools:context=".MainActivity">
     <FrameLayout
         android:id="@+id/fragment_container"
@@ -18,7 +19,7 @@
         app:itemBackground="@color/white"
         app:labelVisibilityMode="labeled"
         app:itemRippleColor="@null"
-        app:itemIconTint="@color/sl_color_green_grey"
+        app:itemIconTint="@null"
         app:itemTextColor="@color/sl_color_green_grey"
         app:menu="@menu/menu_main_bottom" />
 
