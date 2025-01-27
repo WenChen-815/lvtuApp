@@ -3,15 +3,32 @@ package com.zhoujh.lvtu;
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.viewpager2.widget.ViewPager2;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
+import com.zhoujh.lvtu.adapter.FragmentAdapter;
 import com.zhoujh.lvtu.find.AddPostActivity;
+import com.zhoujh.lvtu.find.FollowPostFragment;
+import com.zhoujh.lvtu.find.RecommendPostFragment;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class FindFragment extends Fragment {
+    private final String TAG = "FindFragment";
+
+    private TabLayout tabLayout;
+    private ViewPager2 viewPager;
+
+    private FragmentAdapter fragmentAdapter;
+    private List<Fragment> fragments = new ArrayList<>();
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -27,5 +44,33 @@ public class FindFragment extends Fragment {
             Intent intent = new Intent(getActivity(), AddPostActivity.class);
             startActivity(intent);
         });
+        fragments.add(new RecommendPostFragment());
+        fragments.add(new FollowPostFragment());
+
+        fragmentAdapter = new FragmentAdapter(fragments,getActivity());
+        tabLayout = view.findViewById(R.id.tabLayout);
+        viewPager = view.findViewById(R.id.viewPager);
+        viewPager.setAdapter(fragmentAdapter);
+        TabLayoutMediator mediator = new TabLayoutMediator(
+                tabLayout,
+                viewPager,
+                new TabLayoutMediator.TabConfigurationStrategy() {
+
+                    @Override
+                    public void onConfigureTab(@NonNull TabLayout.Tab tab, int position) {
+                        switch (position){
+                            case 0:
+                                tab.setText("推荐");
+                                break;
+                            case 1:
+                                tab.setText("关注");
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+        );
+        mediator.attach();
     }
 }

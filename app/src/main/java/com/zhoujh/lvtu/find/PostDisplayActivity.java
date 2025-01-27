@@ -20,6 +20,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -27,13 +28,18 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
+import com.zhoujh.lvtu.adapter.CommentAdapter;
+import com.zhoujh.lvtu.model.Comment;
 import com.zhoujh.lvtu.model.Post;
 import com.zhoujh.lvtu.model.UserInfo;
 import com.zhoujh.lvtu.utils.Carousel;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -44,9 +50,10 @@ public class PostDisplayActivity extends AppCompatActivity {
 
     private Post post;
     private UserInfo creatorInfo;
-    //    private List<Comment> commentList = new ArrayList<>();
+    private List<Comment> commentList = new ArrayList<>();
     private OkHttpClient client = new OkHttpClient();
     private final Gson gson = MainActivity.gson;
+    private CommentAdapter commentAdapter;
 
     private ImageView star_btn;
     private ImageView like_btn;
@@ -60,7 +67,7 @@ public class PostDisplayActivity extends AppCompatActivity {
     private TextView content;
     private TextView title;
     private TextView userName;
-    private RecyclerView commentList;
+    private RecyclerView commentListView;
     private EditText chatInputEt;
     private ScrollView scrollView;
 
@@ -83,8 +90,7 @@ public class PostDisplayActivity extends AppCompatActivity {
             if (postJson != null) {
                 post = gson.fromJson(getIntent().getStringExtra("post"), Post.class);
                 findCreaterInfo(post.getUserId());
-            }
-            if (postId != null) {
+            } else if (postId != null) {
                 // TODO 通过ID查找帖子
             }
         }
@@ -93,16 +99,16 @@ public class PostDisplayActivity extends AppCompatActivity {
         setData(post);
     }
 
-    private void findCreaterInfo(String CreatorId) {
+    private void findCreaterInfo(String creatorId) {
         new Thread(() -> {
             Request request = new Request.Builder()
-                    .url("http://"+ MainActivity.IP +"/lvtu/relationship/getCreatorInfo?userId="+MainActivity.USER_ID+"&creatorId="+CreatorId)
+                    .url("http://"+ MainActivity.IP +"/lvtu/relationship/getCreatorInfo?userId="+MainActivity.USER_ID+"&creatorId="+creatorId)
                     .build();
             try (Response response = client.newCall(request).execute()) {
                 if (response.isSuccessful()) {
                     String responseData = response.body().string();
                     if (!responseData.isEmpty()) {
-                        // TODO 处理请求成功
+                        // 处理请求成功
                         Log.i(TAG, "查找用户信息成功: " + responseData);
                         creatorInfo = gson.fromJson(responseData, UserInfo.class);
                         runOnUiThread(()->{
@@ -126,7 +132,7 @@ public class PostDisplayActivity extends AppCompatActivity {
                             }
                         });
                     } else {
-                        // TODO 处理请求失败
+                        // 处理请求失败
                         Log.i(TAG, "查找用户信息失败: " + responseData);
                     }
                 } else {
@@ -159,6 +165,30 @@ public class PostDisplayActivity extends AppCompatActivity {
         //Carousel为自定义轮播图工具类
         Carousel carousel = new Carousel(PostDisplayActivity.this, dotLinerLayout, postImage);
         carousel.initViews(post.getPicturePath());
+
+        loadComment(post.getPostId());
+    }
+
+    private void loadComment(String postId) {
+        new Thread(() -> {
+            Request request = new Request.Builder()
+                    .url("http://"+ MainActivity.IP +"/lvtu/comments/getByPostId?postId="+postId)
+                    .build();
+            try (Response response = client.newCall(request).execute()) {
+                if (response.isSuccessful()) {
+                    String responseData = response.body().string();
+                    if (!responseData.isEmpty()) {
+                        commentList = gson.fromJson(responseData, new TypeToken<List<Comment>>() {}.getType());
+                    } else {
+                        Log.i(TAG, "查找评论失败: " + responseData);
+                    }
+                } else {
+                    Log.e(TAG, "请求失败: " + response.code());
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
     }
 
     private void initView() {
@@ -173,11 +203,12 @@ public class PostDisplayActivity extends AppCompatActivity {
         avatar = findViewById(R.id.avatar);
         back_btn = findViewById(R.id.btn_back);
         star_btn = findViewById(R.id.btn_star);
-        commentList = findViewById(R.id.comment_list);
         submit = findViewById(R.id.submit);
         chatInputEt = findViewById(R.id.chatInputEt);
         scrollView = findViewById(R.id.sc_view);
-//        levelImage = findViewById(R.id.level_image);
+        commentListView = findViewById(R.id.comment_list);
+        commentListView.setLayoutManager(new LinearLayoutManager(this));
+        commentAdapter = new CommentAdapter(commentList, this);
     }
 
     public void setListener() {
