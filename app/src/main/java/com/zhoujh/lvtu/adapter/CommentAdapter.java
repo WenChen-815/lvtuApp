@@ -8,9 +8,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -18,7 +20,9 @@ import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.bumptech.glide.request.RequestOptions;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
+import com.zhoujh.lvtu.find.PostDisplayActivity;
 import com.zhoujh.lvtu.model.Comment;
+import com.zhoujh.lvtu.utils.Utils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,36 +39,16 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
     private final OkHttpClient okHttpClient = new OkHttpClient();
     private final Handler handler = new Handler(Looper.getMainLooper());
 
+    private final PostDisplayActivity.CommentReplyListener listener;
+    private final List<Comment> commentList;
+    private final Context context;
 
-    private List<Comment> finalList;
-
-    private Context context;
-
-    public CommentAdapter(List<Comment> commentList, Context context) {
+    public CommentAdapter(List<Comment> commentList, Context context, PostDisplayActivity.CommentReplyListener listener) {
         this.context = context;
-        List<Comment> organizedList = new ArrayList<>();
-        Map<String, List<Comment>> childCommentsMap = new HashMap<>();
-        // 将二级评论归类到对应的 parentId
-        for (Comment comment : commentList) {
-            if (comment.getParentId() == null || comment.getParentId().isEmpty()) {
-                // 一级评论直接加入到 organizedList
-                organizedList.add(comment);
-            } else {
-                // 二级评论归类到 childCommentsMap
-                childCommentsMap.computeIfAbsent(comment.getParentId(), k -> new ArrayList<>()).add(comment);
-            }
-        }
-
-        // 将二级评论插入到对应一级评论之后
-        finalList = new ArrayList<>();
-        for (Comment comment : organizedList) {
-            finalList.add(comment); // 添加一级评论
-            List<Comment> childComments = childCommentsMap.get(comment.getId());
-            if (childComments != null) {
-                finalList.addAll(childComments); // 插入二级评论
-            }
-        }
+        this.listener = listener;
+        this.commentList = commentList;
     }
+
 
     @NonNull
     @Override
@@ -75,8 +59,28 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
     @Override
     public void onBindViewHolder(@NonNull CommentAdapter.CommentViewHolder holder, int position) {
-        Comment comment = finalList.get(position);
-
+        Comment comment = commentList.get(position);
+        if (comment.getParentId() != null){
+            holder.itemCommentLayout.setPadding(Utils.dpToPx(54, context),
+                    holder.itemCommentLayout.getPaddingTop(),
+                    holder.itemCommentLayout.getPaddingRight(),
+                    holder.itemCommentLayout.getPaddingBottom());
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                    Utils.dpToPx(24, context),
+                    Utils.dpToPx(24, context)
+            );
+            holder.avatar.setLayoutParams(layoutParams);
+        } else {
+            holder.itemCommentLayout.setPadding(Utils.dpToPx(8, context),
+                    holder.itemCommentLayout.getPaddingTop(),
+                    holder.itemCommentLayout.getPaddingRight(),
+                    holder.itemCommentLayout.getPaddingBottom());
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                    Utils.dpToPx(40, context),
+                    Utils.dpToPx(40, context)
+            );
+            holder.avatar.setLayoutParams(layoutParams);
+        }
         // 设置头像
         loadUserAvatar(comment.getUserId(), holder);
 
@@ -97,6 +101,12 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         // 设置评论创建时间
         String commentCreateTime = comment.getCreateTime().toString().replace("T", " ");
         holder.commentCreateTime.setText(commentCreateTime);
+
+        holder.commentReply.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onReplyClick(comment);
+            }
+        });
     }
 
     private void loadUserAvatar(String userId, CommentViewHolder holder) {
@@ -132,7 +142,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
     @Override
     public int getItemCount() {
-        return finalList.size();
+        return commentList.size();
     }
 
     public static class CommentViewHolder extends RecyclerView.ViewHolder{
@@ -141,6 +151,8 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         public TextView commentReplyToUserName;
         public TextView commentContent;
         public TextView commentCreateTime;
+        public TextView commentReply;
+        private ConstraintLayout itemCommentLayout;
         public CommentViewHolder(@NonNull View itemView) {
             super(itemView);
             avatar = itemView.findViewById(R.id.avatar);
@@ -148,6 +160,8 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             commentReplyToUserName = itemView.findViewById(R.id.commentReplyToUserName);
             commentContent = itemView.findViewById(R.id.commentContent);
             commentCreateTime = itemView.findViewById(R.id.commentCreateTime);
+            commentReply = itemView.findViewById(R.id.commentReply);
+            itemCommentLayout = itemView.findViewById(R.id.itemCommentLayout);
         }
     }
 }

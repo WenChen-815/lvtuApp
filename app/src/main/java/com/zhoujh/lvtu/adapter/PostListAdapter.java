@@ -1,5 +1,7 @@
 package com.zhoujh.lvtu.adapter;
 
+import static com.zhoujh.lvtu.utils.Utils.dpToPx;
+
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
@@ -26,6 +28,7 @@ import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.find.PostDisplayActivity;
 import com.zhoujh.lvtu.model.Post;
 import com.zhoujh.lvtu.model.UserInfo;
+import com.zhoujh.lvtu.utils.Utils;
 
 import java.io.IOException;
 import java.util.List;
@@ -73,18 +76,15 @@ public class PostListAdapter extends RecyclerView.Adapter<PostListAdapter.PostVi
         for (int i = 0; i < Math.min(3, picturePath.size()); i++) {
             ImageView imageView = new ImageView(context);
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                    dpToPx(111),
-                    dpToPx(111)
+                    dpToPx(111,context),
+                    dpToPx(111,context)
             );
-            layoutParams.setMargins(dpToPx(3), dpToPx(0), dpToPx(3), dpToPx(16));
+            layoutParams.setMargins(dpToPx(3,context), dpToPx(0,context), dpToPx(3,context), dpToPx(16,context));
             imageView.setLayoutParams(layoutParams);
             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
             // 设置外边距
-            RequestOptions requestOptions = new RequestOptions()
-                    .transform(new CircleCrop());
             Glide.with(context).load("http://" + MainActivity.IP + picturePath.get(i))
                     .placeholder(R.drawable.headimg)  // 设置占位图
-                    .apply(requestOptions)// 设置签名
                     .into(imageView);
             holder.imageContainer.addView(imageView);
         }
@@ -167,11 +167,5 @@ public class PostListAdapter extends RecyclerView.Adapter<PostListAdapter.PostVi
             followState = itemView.findViewById(R.id.tx_follow_state);
             constraintLayout = itemView.findViewById(R.id.root_layout);
         }
-    }
-
-    // dp to px
-    private int dpToPx(int dp) {
-        float density = context.getResources().getDisplayMetrics().density;
-        return Math.round(dp * density);
     }
 }

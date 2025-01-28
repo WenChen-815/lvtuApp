@@ -13,6 +13,25 @@ public class Comment {
     private String userName;
     private String replyToUserName;
 
+    public Comment(String postId, String parentId, String userId, String replyToUserId, String content, LocalDateTime createTime, String userName, String replyToUserName) {
+        this.postId = postId;
+        this.parentId = parentId;
+        this.userId = userId;
+        this.replyToUserId = replyToUserId;
+        this.content = content;
+        this.createTime = createTime;
+        this.userName = userName;
+        this.replyToUserName = replyToUserName;
+    }
+
+    public Comment(String postId, String userId, String content, LocalDateTime createTime, String userName) {
+        this.postId = postId;
+        this.userId = userId;
+        this.content = content;
+        this.createTime = createTime;
+        this.userName = userName;
+    }
+
     public String getId() {
         return id;
     }
