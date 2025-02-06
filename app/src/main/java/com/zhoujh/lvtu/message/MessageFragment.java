@@ -1,4 +1,4 @@
-package com.zhoujh.lvtu;
+package com.zhoujh.lvtu.message;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.message.UserSearchActivity;
 
 public class MessageFragment extends Fragment {

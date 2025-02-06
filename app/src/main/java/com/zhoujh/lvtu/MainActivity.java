@@ -27,6 +27,10 @@ import com.hyphenate.chat.EMClient;
 import com.hyphenate.chat.EMOptions;
 import com.hyphenate.chat.EMUserInfo;
 import com.hyphenate.exceptions.HyphenateException;
+import com.zhoujh.lvtu.find.FindFragment;
+import com.zhoujh.lvtu.main.MainFragment;
+import com.zhoujh.lvtu.message.MessageFragment;
+import com.zhoujh.lvtu.personal.PersonalFragment;
 import com.zhoujh.lvtu.utils.LocalDateTimeAdapter;
 import com.zhoujh.lvtu.utils.StatusBarUtils;
 import com.zhoujh.lvtu.login.LoginActivity;
@@ -36,8 +40,9 @@ import java.time.LocalDateTime;
 
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "MainActivity";
-    public static final String IP = "192.168.110.97:8080";
+    public static final String IP = "192.168.110.96:8080";
     public static String USER_ID = "userId";
+    public static final int PERMISSION_REQUEST_CODE = 123; // 定义一个请求码，用于识别权限请求
     public static User user;
     public static final Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
@@ -56,20 +61,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // 权限申请
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!Settings.System.canWrite(this)) {
-                // 引导用户到设置页面授予权限
-                Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
-                intent.setData(Uri.parse("package:" + getPackageName()));
-                startActivityForResult(intent, 100);
-            } else {
-                // 已经拥有权限
-//                Toast.makeText(this, "已经拥有 WRITE_SETTINGS 权限", Toast.LENGTH_SHORT).show();
-            }
-        } else {
-            // API 级别低于 23，不需要动态请求权限
-//            Toast.makeText(this, "不需要动态请求 WRITE_SETTINGS 权限", Toast.LENGTH_SHORT).show();
-        }
+        checkPermissions();
 
         // 沉浸式导航栏
         StatusBarUtils.setImmersiveStatusBar(this, getWindow().getDecorView(),StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
@@ -85,6 +77,21 @@ public class MainActivity extends AppCompatActivity {
             USER_ID = user.getUserId();
             initView();
             initHuanXin();
+        }
+    }
+
+    private void checkPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!Settings.System.canWrite(this)) {
+                // 引导用户到设置页面授予权限
+                Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
+                intent.setData(Uri.parse("package:" + getPackageName()));
+                startActivityForResult(intent, 100);
+            } else {
+                // 已经拥有权限
+            }
+        } else {
+            // API 级别低于 23，不需要动态请求权限
         }
     }
 

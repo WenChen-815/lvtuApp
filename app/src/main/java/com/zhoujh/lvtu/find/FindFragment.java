@@ -1,4 +1,4 @@
-package com.zhoujh.lvtu;
+package com.zhoujh.lvtu.find;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -13,10 +13,8 @@ import android.view.ViewGroup;
 
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
+import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.adapter.FragmentAdapter;
-import com.zhoujh.lvtu.find.AddPostActivity;
-import com.zhoujh.lvtu.find.FollowPostFragment;
-import com.zhoujh.lvtu.find.RecommendPostFragment;
 
 import java.util.ArrayList;
 import java.util.List;

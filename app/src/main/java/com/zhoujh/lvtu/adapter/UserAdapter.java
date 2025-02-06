@@ -63,7 +63,9 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
                     updateFollow(holder, userInfo, 1, position);
                     break;
                 case 1:
+                case 2:
                     updateFollow(holder, userInfo, 0, position);
+                    break;
                 default:
                     break;
             }
@@ -71,13 +73,13 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         RequestOptions requestOptions = new RequestOptions()
                 .transform(new CircleCrop());
         Glide.with(context)
-                .load("http://"+MainActivity.IP + userInfo.getAvatarUrl())
+                .load("http://" + MainActivity.IP + userInfo.getAvatarUrl())
                 .placeholder(R.drawable.headimg)  // 设置占位图
                 .apply(requestOptions)// 设置签名
                 .into(holder.imgAvatar);
     }
 
-    private void updateFollow(UserViewHolder holder, UserInfo userInfo, int newRelationship,int position) {
+    private void updateFollow(UserViewHolder holder, UserInfo userInfo, int newRelationship, int position) {
         Thread thread = new Thread(() -> {
             RequestBody requestBody = new MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
@@ -97,7 +99,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
                             Log.e("UserAdapter", "update relationship error");
                         } else {
                             Log.i("UserAdapter", "relationship：" + responseData);
-                            setFollowStateUI(holder, responseData,position);
+                            setFollowStateUI(holder, responseData, position);
                         }
                     });
                 }
@@ -116,6 +118,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     static class UserViewHolder extends RecyclerView.ViewHolder {
         TextView userName, followState;
         ImageView imgAvatar;
+
         public UserViewHolder(@NonNull View itemView) {
             super(itemView);
             userName = itemView.findViewById(R.id.user_name);
@@ -129,7 +132,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
      *
      * @param state 状态值，用于决定UI的显示状态。0代表未关注状态,1代表已关注状态, 2代表互关状态。
      */
-    private void setFollowStateUI(UserViewHolder holder, int state,int position) {
+    private void setFollowStateUI(UserViewHolder holder, int state, int position) {
         Drawable drawable;
         switch (state) {
             case 0:

@@ -36,11 +36,13 @@ import com.google.gson.reflect.TypeToken;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.adapter.CommentAdapter;
+import com.zhoujh.lvtu.adapter.UserAdapter;
 import com.zhoujh.lvtu.model.Comment;
 import com.zhoujh.lvtu.model.Post;
 import com.zhoujh.lvtu.model.UserInfo;
 import com.zhoujh.lvtu.utils.Carousel;
 import com.zhoujh.lvtu.utils.NoScrollRecyclerView;
+import com.zhoujh.lvtu.utils.StatusBarUtils;
 import com.zhoujh.lvtu.utils.Utils;
 
 import java.io.IOException;
@@ -52,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 
 import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -74,7 +77,6 @@ public class PostDisplayActivity extends AppCompatActivity {
     private ImageView star_btn;
     private ImageView like_btn;
     private ImageView back_btn;
-    private ImageView menuBtn;
     private ImageView cancelReplyBtn;
     private ImageView avatar;
     private Button submit;
@@ -91,13 +93,15 @@ public class PostDisplayActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+//        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_post_display);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root_layout), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        StatusBarUtils.setImmersiveStatusBar(this, null, StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
+
         String postJson = getIntent().getStringExtra("post");
         String postId = getIntent().getStringExtra("postId");
         if (postJson == null && postId == null) {
@@ -106,7 +110,7 @@ public class PostDisplayActivity extends AppCompatActivity {
         } else {
             if (postJson != null) {
                 post = gson.fromJson(getIntent().getStringExtra("post"), Post.class);
-                findCreaterInfo(post.getUserId());
+                findCreatorInfo(post.getUserId());
             } else if (postId != null) {
                 // TODO 通过ID查找帖子
             }
@@ -116,10 +120,10 @@ public class PostDisplayActivity extends AppCompatActivity {
         setData(post);
     }
 
-    private void findCreaterInfo(String creatorId) {
+    private void findCreatorInfo(String creatorId) {
         new Thread(() -> {
             Request request = new Request.Builder()
-                    .url("http://"+ MainActivity.IP +"/lvtu/relationship/getCreatorInfo?userId="+MainActivity.USER_ID+"&creatorId="+creatorId)
+                    .url("http://" + MainActivity.IP + "/lvtu/relationship/getCreatorInfo?userId=" + MainActivity.USER_ID + "&creatorId=" + creatorId)
                     .build();
             try (Response response = client.newCall(request).execute()) {
                 if (response.isSuccessful()) {
@@ -128,23 +132,23 @@ public class PostDisplayActivity extends AppCompatActivity {
                         // 处理请求成功
                         Log.i(TAG, "查找用户信息成功: " + responseData);
                         creatorInfo = gson.fromJson(responseData, UserInfo.class);
-                        runOnUiThread(()->{
+                        runOnUiThread(() -> {
                             userName.setText(creatorInfo.getUserName());
                             RequestOptions requestOptions = new RequestOptions()
                                     .transform(new CircleCrop());
                             Glide.with(getApplicationContext())
-                                    .load("http://"+MainActivity.IP + creatorInfo.getAvatarUrl())
+                                    .load("http://" + MainActivity.IP + creatorInfo.getAvatarUrl())
                                     .placeholder(R.drawable.headimg)  // 设置占位图
                                     .apply(requestOptions)// 设置签名
                                     .into(avatar);
-                            if (creatorInfo.getRelationship() == 0){
+                            if (creatorInfo.getRelationship() == 0) {
                                 // 设置UI为未关注状态
                                 setFollowUI("+关注", Color.parseColor("#FFFFFF"), R.drawable.round_button_unfollowed_background);
-                            } else if(creatorInfo.getRelationship() == 1){
+                            } else if (creatorInfo.getRelationship() == 1) {
                                 setFollowUI("已关注", Color.parseColor("#181A23"), R.drawable.round_button_followed_background);
-                            } else if(creatorInfo.getRelationship() == 2){
+                            } else if (creatorInfo.getRelationship() == 2) {
                                 setFollowUI("互关", Color.parseColor("#181A23"), R.drawable.round_button_followed_background);
-                            } else if(creatorInfo.getRelationship() == 3){
+                            } else if (creatorInfo.getRelationship() == 3) {
                                 Log.e(TAG, "获取到拉黑用户信息！");
                             }
                         });
@@ -164,17 +168,18 @@ public class PostDisplayActivity extends AppCompatActivity {
     /**
      * 设置关注按钮的UI
      *
-     * @param followStr 关注按钮的文字
-     * @param textColor 文本颜色
+     * @param followStr  关注按钮的文字
+     * @param textColor  文本颜色
      * @param drawableId 背景
      */
-    private void setFollowUI(String followStr, int textColor, int drawableId){
+    private void setFollowUI(String followStr, int textColor, int drawableId) {
         Drawable drawable;
         follow.setText(followStr);
         follow.setTextColor(textColor);
         drawable = ContextCompat.getDrawable(getApplicationContext(), drawableId);
         follow.setBackground(drawable);
     }
+
     private void setData(Post post) {
         title.setText(post.getPostTitle());
         content.setText(post.getPostContent());
@@ -189,14 +194,15 @@ public class PostDisplayActivity extends AppCompatActivity {
     private void loadComment(String postId) {
         new Thread(() -> {
             Request request = new Request.Builder()
-                    .url("http://"+ MainActivity.IP +"/lvtu/comments/getByPostId?postId="+postId)
+                    .url("http://" + MainActivity.IP + "/lvtu/comments/getByPostId?postId=" + postId)
                     .build();
             try (Response response = client.newCall(request).execute()) {
                 if (response.isSuccessful()) {
                     String responseData = response.body().string();
                     if (!responseData.isEmpty()) {
                         Log.i(TAG, "查找评论成功: " + responseData);
-                        commentList = gson.fromJson(responseData, new TypeToken<List<Comment>>() {}.getType());
+                        commentList = gson.fromJson(responseData, new TypeToken<List<Comment>>() {
+                        }.getType());
                         runOnUiThread(() -> {
                             createFinalCommentList();
                             commentAdapter = new CommentAdapter(finalCommentList, this, new CommentReplyListener());
@@ -216,8 +222,8 @@ public class PostDisplayActivity extends AppCompatActivity {
 
     private void initView() {
         follow = findViewById(R.id.follow);
-        like_btn = findViewById(R.id.btn_like);
-        menuBtn = findViewById(R.id.popupmenu);
+//        like_btn = findViewById(R.id.btn_like);
+//        menuBtn = findViewById(R.id.popupmenu);
         postImage = findViewById(R.id.post_image);
         dotLinerLayout = findViewById(R.id.index_dot);
         content = findViewById(R.id.post_content);
@@ -225,7 +231,7 @@ public class PostDisplayActivity extends AppCompatActivity {
         userName = findViewById(R.id.user_name);
         avatar = findViewById(R.id.avatar);
         back_btn = findViewById(R.id.btn_back);
-        star_btn = findViewById(R.id.btn_star);
+//        star_btn = findViewById(R.id.btn_star);
         submit = findViewById(R.id.submit);
         chatInputEt = findViewById(R.id.chatInputEt);
         scrollView = findViewById(R.id.sc_view);
@@ -510,13 +516,15 @@ public class PostDisplayActivity extends AppCompatActivity {
         cancelReplyBtn.setOnClickListener(v -> {
             chatInputEt.setHint("");
             chatInputEt.setTag("");
-            chatInputEt.setPadding(chatInputEt.getPaddingLeft(), chatInputEt.getPaddingTop(), Utils.dpToPx(5,PostDisplayActivity.this), chatInputEt.getPaddingBottom());
+            chatInputEt.setPadding(chatInputEt.getPaddingLeft(), chatInputEt.getPaddingTop(), Utils.dpToPx(5, PostDisplayActivity.this), chatInputEt.getPaddingBottom());
             cancelReplyBtn.setVisibility(View.GONE);
             // 隐藏键盘
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             if (imm != null) {
                 imm.hideSoftInputFromWindow(chatInputEt.getWindowToken(), 0);
             }
+            // 清除回复
+            replyComment = null;
         });
         submit.setOnClickListener(v -> {
             String content = chatInputEt.getText().toString();
@@ -552,11 +560,11 @@ public class PostDisplayActivity extends AppCompatActivity {
                             MediaType.parse("application/json; charset=utf-8")
                     );
                     Request request = new Request.Builder()
-                            .url("http://"+MainActivity.IP+"/lvtu/comments/addComment")
+                            .url("http://" + MainActivity.IP + "/lvtu/comments/addComment")
                             .post(requestBody)
                             .build();
-                    try (Response response = client.newCall(request).execute()){
-                        if(response.isSuccessful()){
+                    try (Response response = client.newCall(request).execute()) {
+                        if (response.isSuccessful()) {
                             String responseData = response.body().string();
                             if (!responseData.isEmpty()) {
                                 Log.i(TAG, "评论成功: " + responseData);
@@ -591,13 +599,73 @@ public class PostDisplayActivity extends AppCompatActivity {
                 }).start();
             }
         });
+        follow.setOnClickListener(v -> {
+            if (creatorInfo.getUserId().equals(MainActivity.USER_ID)) {
+                Toast.makeText(PostDisplayActivity.this, "不能关注自己", Toast.LENGTH_SHORT).show();
+            } else {
+                switch (creatorInfo.getRelationship()) {
+                    case 0:
+                        updateFollow(creatorInfo, 1);
+                        break;
+                    case 1:
+                    case 2:
+                        updateFollow(creatorInfo, 0);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
     }
+
+    private void updateFollow(UserInfo creatorInfo, int newRelationship) {
+        Thread thread = new Thread(() -> {
+            RequestBody requestBody = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("userId", MainActivity.USER_ID)
+                    .addFormDataPart("relatedUserId", creatorInfo.getUserId())
+                    .addFormDataPart("relationshipType", String.valueOf(newRelationship))
+                    .build();
+            Request request = new Request.Builder()
+                    .url("http://" + MainActivity.IP + "/lvtu/relationship/update")
+                    .post(requestBody)
+                    .build();
+            try (Response response = client.newCall(request).execute()) {
+                if (response.isSuccessful() && response.body() != null) {
+                    int responseData = Integer.parseInt(response.body().string());
+                    runOnUiThread(() -> {
+                        if (responseData == -1) {
+                            Log.e(TAG, "update relationship error");
+                        } else {
+                            Log.i(TAG, "relationship：" + responseData);
+                            if (responseData == 0) {
+                                // 设置UI为未关注状态
+                                setFollowUI("+关注", Color.parseColor("#FFFFFF"), R.drawable.round_button_unfollowed_background);
+                            } else if (responseData == 1) {
+                                setFollowUI("已关注", Color.parseColor("#181A23"), R.drawable.round_button_followed_background);
+                            } else if (responseData == 2) {
+                                setFollowUI("互关", Color.parseColor("#181A23"), R.drawable.round_button_followed_background);
+                            } else if (responseData == 3) {
+                                Log.e(TAG, "获取到拉黑用户信息！");
+                            }
+                            creatorInfo.setRelationship(responseData);
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        thread.start();
+    }
+
+
     public class CommentReplyListener {
-        public void onReplyClick(Comment comment){
+        public void onReplyClick(Comment comment) {
             replyComment = comment;
             chatInputEt.setHint("回复 " + comment.getUserName() + " :");
             chatInputEt.setTag(comment.getId());
-            chatInputEt.setPadding(chatInputEt.getPaddingLeft(), chatInputEt.getPaddingTop(), Utils.dpToPx(40,PostDisplayActivity.this), chatInputEt.getPaddingBottom());
+            chatInputEt.setPadding(chatInputEt.getPaddingLeft(), chatInputEt.getPaddingTop(), Utils.dpToPx(40, PostDisplayActivity.this), chatInputEt.getPaddingBottom());
             cancelReplyBtn.setVisibility(View.VISIBLE);
             // 弹出用户键盘
             chatInputEt.requestFocus();

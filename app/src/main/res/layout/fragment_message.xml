@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MessageFragment">
+    tools:context=".message.MessageFragment">
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:id="@+id/root_layout"
@@ -21,14 +21,6 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
                 android:paddingVertical="10dp">
-
-                <ImageView
-                    android:id="@+id/back"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_alignParentLeft="true"
-                    android:layout_marginStart="6dp"
-                    android:src="@drawable/back" />
 
                 <TextView
                     android:id="@+id/title_text"

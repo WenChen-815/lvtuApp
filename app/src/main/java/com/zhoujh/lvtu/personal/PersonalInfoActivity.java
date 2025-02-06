@@ -3,6 +3,9 @@ package com.zhoujh.lvtu.personal;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import android.app.Activity;
 import android.app.DatePickerDialog;
@@ -64,10 +67,16 @@ public class PersonalInfoActivity extends AppCompatActivity {
 
     private ActivityResultLauncher<Intent> imagePickerLauncher;
     private OkHttpClient client = new OkHttpClient();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_personal_info);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root_personal_info), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
         StatusBarUtils.setImmersiveStatusBar(this, findViewById(R.id.root_personal_info), StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
 
         dateFormatter = new SimpleDateFormat("yyyy-MM-dd", Locale.PRC);
@@ -133,7 +142,7 @@ public class PersonalInfoActivity extends AppCompatActivity {
         RequestOptions requestOptions = new RequestOptions()
                 .transform(new CircleCrop());
         Glide.with(getApplicationContext())
-                .load("http://"+MainActivity.IP + MainActivity.user.getAvatarUrl())
+                .load("http://" + MainActivity.IP + MainActivity.user.getAvatarUrl())
                 .placeholder(R.drawable.headimg)  // 设置占位图
                 .apply(requestOptions)// 设置签名
                 .into(imgAvatar);
@@ -148,6 +157,7 @@ public class PersonalInfoActivity extends AppCompatActivity {
         edtBirth = findViewById(R.id.edt_birth);
         edtEmail = findViewById(R.id.edt_email);
     }
+
     private void setListeners() {
         edtBirth.setOnClickListener(v -> {
             Calendar newCalendar = Calendar.getInstance();
@@ -175,29 +185,16 @@ public class PersonalInfoActivity extends AppCompatActivity {
             RequestBody requestBody;
             if (isUploadAvatar) {
                 // 判断头像图片格式为png或jpg
-                if (avatarType.equals("png")) {
-                    Log.i(TAG, "png");
-                    requestBody = new MultipartBody.Builder()
-                            .setType(MultipartBody.FORM)
-                            .addFormDataPart("file", "avatar.png", RequestBody.create(MediaType.parse("image/png"), avatarImageBytes))
-                            .addFormDataPart("userId", MainActivity.USER_ID)
-                            .addFormDataPart("userName", edtName.getText().toString())
-                            .addFormDataPart("gender", String.valueOf(spGender.getSelectedItemPosition()))
-                            .addFormDataPart("email", edtEmail.getText().toString())
-                            .addFormDataPart("birth", edtBirth.getText().toString())
-                            .build();
-                } else {
-                    Log.i(TAG, "jpg");
-                    requestBody = new MultipartBody.Builder()
-                            .setType(MultipartBody.FORM)
-                            .addFormDataPart("file", "avatar.jpg", RequestBody.create(MediaType.parse("image/jpeg"), avatarImageBytes))
-                            .addFormDataPart("userId", MainActivity.USER_ID)
-                            .addFormDataPart("userName", edtName.getText().toString())
-                            .addFormDataPart("gender", String.valueOf(spGender.getSelectedItemPosition()))
-                            .addFormDataPart("email", edtEmail.getText().toString())
-                            .addFormDataPart("birth", edtBirth.getText().toString())
-                            .build();
-                }
+                Log.i(TAG, avatarType);
+                requestBody = new MultipartBody.Builder()
+                        .setType(MultipartBody.FORM)
+                        .addFormDataPart("file", "avatar." + avatarType, RequestBody.create(MediaType.parse("image/png"), avatarImageBytes))
+                        .addFormDataPart("userId", MainActivity.USER_ID)
+                        .addFormDataPart("userName", edtName.getText().toString())
+                        .addFormDataPart("gender", String.valueOf(spGender.getSelectedItemPosition()))
+                        .addFormDataPart("email", edtEmail.getText().toString())
+                        .addFormDataPart("birth", edtBirth.getText().toString())
+                        .build();
             } else {
                 requestBody = new MultipartBody.Builder()
                         .setType(MultipartBody.FORM)
@@ -213,10 +210,10 @@ public class PersonalInfoActivity extends AppCompatActivity {
                     .post(requestBody)
                     .build();
             Thread thread = new Thread(() -> {
-                try(Response response = client.newCall(request).execute()) {
+                try (Response response = client.newCall(request).execute()) {
                     if (response.isSuccessful()) {
                         String responseData = response.body().string();
-                        if(!responseData.isEmpty()){
+                        if (!responseData.isEmpty()) {
                             MainActivity.user = gson.fromJson(responseData, User.class);
                             runOnUiToast("更新成功");
                         } else {
@@ -232,7 +229,8 @@ public class PersonalInfoActivity extends AppCompatActivity {
             thread.start();
         });
     }
-    private void runOnUiToast(String msg){
+
+    private void runOnUiToast(String msg) {
         runOnUiThread(() -> {
             Toast.makeText(PersonalInfoActivity.this, msg, Toast.LENGTH_SHORT).show();
         });
@@ -241,7 +239,7 @@ public class PersonalInfoActivity extends AppCompatActivity {
     // 辅助方法，将 Bitmap 转换为字节数组
     private byte[] bitmapToBytes(Bitmap bitmap) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        if(avatarType.equals("jpg")){
+        if (avatarType.equals("jpg")) {
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
         } else {
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);

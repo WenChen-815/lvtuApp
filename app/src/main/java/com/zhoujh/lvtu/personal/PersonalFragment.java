@@ -1,4 +1,4 @@
-package com.zhoujh.lvtu;
+package com.zhoujh.lvtu.personal;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,7 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
-import com.zhoujh.lvtu.personal.PersonalInfoActivity;
+import com.zhoujh.lvtu.R;
 
 public class PersonalFragment extends Fragment {
     private Button btnToInfo;

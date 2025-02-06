@@ -1,5 +1,7 @@
 package com.zhoujh.lvtu.find;
 
+import static com.zhoujh.lvtu.MainActivity.PERMISSION_REQUEST_CODE;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -61,7 +63,6 @@ import okhttp3.Response;
 
 public class AddPostActivity extends AppCompatActivity {
     private final String TAG = "AddPostActivity";
-    public static final int PERMISSION_REQUEST_CODE = 123; // 定义一个请求码，用于识别权限请求
     private final int RESULT_LOAD_IMAGES = 1, RESULT_CAMERA_IMAGE = 2;
     private final Gson gson = MainActivity.gson;
 
@@ -80,7 +81,6 @@ public class AddPostActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_add_post);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
