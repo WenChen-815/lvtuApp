@@ -31,6 +31,7 @@ import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.model.TravelPlan;
 import com.zhoujh.lvtu.model.UserInfo;
 import com.zhoujh.lvtu.utils.Carousel;
+import com.zhoujh.lvtu.utils.StatusBarUtils;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -69,24 +70,24 @@ public class PlanDisplayActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_plan_display);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root_layout), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
+        StatusBarUtils.setImmersiveStatusBar(this, null, StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
         Intent intent = getIntent();
         if (intent.getStringExtra("travelPlanJson") != null) {
             travelPlan = new TravelPlan();
             travelPlan = gson.fromJson(intent.getStringExtra("travelPlanJson"), TravelPlan.class);
             findCreatorInfo(travelPlan.getUserId());
+            initView();
+            setListener();
+            setData();
         } else {
             Log.i(TAG, "空数据");
+            finish();
         }
-
-        initView();
-        setListener();
-        setData();
     }
 
     private void setData() {
@@ -138,7 +139,7 @@ public class PlanDisplayActivity extends AppCompatActivity {
             String endTime = dateFormatter.format(travelPlan.getEndTime());
             time.setText(startTime + " ~ " + endTime);
 
-            currentParticipants.setText(travelPlan.getCurrentParticipants());
+            currentParticipants.setText(String.valueOf(travelPlan.getCurrentParticipants()));
             if(travelPlan.getMaxParticipants() > 0){
                 if (travelPlan.getCurrentParticipants() >= travelPlan.getMaxParticipants()) {
                     currentParticipants.setTextColor(Color.parseColor("#FF0000"));
@@ -199,10 +200,10 @@ public class PlanDisplayActivity extends AppCompatActivity {
         follow = findViewById(R.id.follow);
 //        like_btn = findViewById(R.id.btn_like);
 //        menuBtn = findViewById(R.id.popupmenu);
-        planImage = findViewById(R.id.post_image);
+        planImage = findViewById(R.id.plan_image);
         dotLinerLayout = findViewById(R.id.index_dot);
-        content = findViewById(R.id.post_content);
-        title = findViewById(R.id.post_title);
+        content = findViewById(R.id.content);
+        title = findViewById(R.id.title);
         userName = findViewById(R.id.user_name);
         avatar = findViewById(R.id.avatar);
 //        star_btn = findViewById(R.id.btn_star);

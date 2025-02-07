@@ -1,115 +1,120 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:padding="16dp"
-    android:id="@+id/root_layout"
-    android:background="@color/white">
+    android:background="@color/white"
+    android:padding="16dp">
     <!-- 头像和用户名 -->
     <LinearLayout
         android:id="@+id/ll1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:gravity="center_vertical"
-        app:layout_constraintStart_toStartOf="parent"
+        android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:id="@+id/imageViewUserAvatar"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:scaleType="centerCrop"
-            android:layout_marginEnd="5dp"/>
+            android:layout_marginEnd="5dp"
+            android:scaleType="centerCrop" />
 
         <TextView
             android:id="@+id/textViewUsername"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="13sp"
             android:text="用户名"
-            android:textStyle="bold"/>
+            android:textSize="13sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tx_follow_state"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="你的关注"
-            android:gravity="center"
-            android:textSize="11sp"
             android:layout_margin="5dp"
-            android:background="#CCC9C9"/>
+            android:background="#CCC9C9"
+            android:gravity="center"
+            android:text="你的关注"
+            android:textSize="11sp" />
     </LinearLayout>
     <!-- 标题 -->
     <TextView
         android:id="@+id/textViewTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="@color/black"
         android:layout_marginTop="3dp"
         android:layout_marginBottom="3dp"
         android:maxLines="1"
-        app:layout_constraintStart_toStartOf="parent"
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ll1"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ll1" />
     <!-- 内容预览 -->
     <TextView
         android:id="@+id/textViewContentPreview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/black"
-        android:textSize="13sp"
         android:layout_marginBottom="3dp"
         android:maxLines="2"
-        app:layout_constraintStart_toStartOf="parent"
+        android:textColor="@color/black"
+        android:textSize="13sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewTitle"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewTitle" />
     <!-- 图片 -->
     <LinearLayout
         android:id="@+id/image_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:gravity="start"
-        app:layout_constraintStart_toStartOf="parent"
+        android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewContentPreview">
-    </LinearLayout>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewContentPreview"/>
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/image_container">
+
         <LinearLayout
-            android:layout_alignParentEnd="true"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true">
+
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@mipmap/like1"/>
+                android:src="@mipmap/like1" />
+
             <TextView
-                android:paddingEnd="10dp"
                 android:id="@+id/like_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:text="666"/>
+                android:paddingEnd="10dp"
+                android:text="666" />
+
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@mipmap/comment"/>
+                android:src="@mipmap/comment" />
+
             <TextView
                 android:id="@+id/comment_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:text="666"/>
+                android:text="666" />
         </LinearLayout>
     </RelativeLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
