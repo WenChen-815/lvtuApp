@@ -30,7 +30,7 @@ import com.google.gson.Gson;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.utils.StatusBarUtils;
-import com.zhoujh.lvtu.model.User;
+import com.zhoujh.lvtu.utils.modle.User;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

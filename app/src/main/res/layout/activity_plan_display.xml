@@ -2,10 +2,10 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    android:id="@+id/root_layout"
     tools:context=".main.PlanDisplayActivity">
 
     <RelativeLayout
@@ -37,26 +37,27 @@
             android:textColor="#0c0c0c"
             android:textSize="22sp"
             android:textStyle="bold" />
+
         <TextView
             android:id="@+id/status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_marginStart="10dp"
-            android:text="进行中"
-            android:padding="2dp"
             android:layout_toEndOf="@+id/title"
             android:background="@drawable/blue_round_button"
+            android:padding="2dp"
+            android:text="进行中"
             android:textColor="#FEFEFE"
             android:textSize="14sp" />
 
-<!--        <ImageView-->
-<!--            android:id="@+id/popupmenu"-->
-<!--            android:layout_width="24dp"-->
-<!--            android:layout_height="24dp"-->
-<!--            android:layout_alignParentEnd="true"-->
-<!--            android:layout_marginEnd="6dp"-->
-<!--            android:src="@mipmap/menu" />-->
+        <!--        <ImageView-->
+        <!--            android:id="@+id/popupmenu"-->
+        <!--            android:layout_width="24dp"-->
+        <!--            android:layout_height="24dp"-->
+        <!--            android:layout_alignParentEnd="true"-->
+        <!--            android:layout_marginEnd="6dp"-->
+        <!--            android:src="@mipmap/menu" />-->
     </RelativeLayout>
 
     <ScrollView
@@ -95,8 +96,8 @@
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingBottom="5dp"
-                android:paddingStart="10dp">
+                android:paddingStart="10dp"
+                android:paddingBottom="5dp">
 
                 <ImageView
                     android:id="@+id/avatar"
@@ -134,71 +135,91 @@
                 android:id="@+id/time"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingBottom="10dp"
                 android:paddingLeft="10dp"
                 android:paddingRight="10dp"
-                android:textColor="@color/black"
+                android:paddingBottom="10dp"
                 android:text="起止时间：2025-01-20 ~ 2025-02-11"
+                android:textColor="@color/black"
                 android:textSize="15sp" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="人数"
                     android:layout_marginBottom="10dp"
                     android:paddingLeft="10dp"
                     android:paddingRight="10dp"
+                    android:text="人数"
                     android:textColor="@color/black"
-                    android:textSize="15sp"/>
+                    android:textSize="15sp" />
+
                 <TextView
                     android:id="@+id/current_participants"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0"
                     android:layout_marginBottom="10dp"
                     android:paddingLeft="10dp"
+                    android:text="0"
                     android:textColor="@color/theme_blue"
-                    android:textSize="15sp"/>
+                    android:textSize="15sp" />
+
                 <TextView
                     android:id="@+id/max_participants"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="/10"
                     android:layout_marginBottom="10dp"
                     android:paddingRight="10dp"
+                    android:text="/10"
                     android:textColor="@color/black"
-                    android:textSize="15sp"/>
+                    android:textSize="15sp" />
             </LinearLayout>
+
+            <HorizontalScrollView
+                android:id="@+id/participants_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingBottom="10dp" />
+
+            <TextView
+                android:id="@+id/travel_address"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
             <TextView
                 android:id="@+id/budget"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingBottom="10dp"
                 android:paddingLeft="10dp"
                 android:paddingRight="10dp"
+                android:paddingBottom="10dp"
+                android:text="预算：3000（元）"
                 android:textColor="@color/black"
-                android:textSize="15sp"
-                android:text="预算：3000（元）"/>
+                android:textSize="15sp" />
+
             <TextView
                 android:id="@+id/travel_mode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingBottom="10dp"
                 android:paddingLeft="10dp"
                 android:paddingRight="10dp"
+                android:paddingBottom="10dp"
                 android:text="出行方式：自驾"
                 android:textColor="@color/black"
                 android:textSize="15sp" />
+
             <TextView
                 android:id="@+id/address"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingBottom="10dp"
                 android:paddingLeft="10dp"
                 android:paddingRight="10dp"
+                android:paddingBottom="10dp"
                 android:text="地址"
                 android:textColor="@color/black"
                 android:textSize="15sp" />
@@ -224,7 +245,6 @@
         android:id="@+id/mChatInputPanel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="#EEEEEE"
 
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -234,17 +254,15 @@
         <Button
             android:id="@+id/submit"
             android:layout_width="0dp"
-            android:layout_height="35dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="6dp"
+            android:layout_height="wrap_content"
             android:background="@drawable/blue_round_button"
             android:text="和TA一起"
             android:textColor="#FFFFFF"
 
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

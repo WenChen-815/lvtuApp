@@ -1,4 +1,4 @@
-package com.zhoujh.lvtu.adapter;
+package com.zhoujh.lvtu.message.adapter;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -21,7 +21,7 @@ import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.bumptech.glide.request.RequestOptions;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
-import com.zhoujh.lvtu.model.UserInfo;
+import com.zhoujh.lvtu.utils.modle.UserInfo;
 
 import java.util.List;
 

@@ -14,7 +14,7 @@ import android.view.ViewGroup;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.zhoujh.lvtu.R;
-import com.zhoujh.lvtu.adapter.FragmentAdapter;
+import com.zhoujh.lvtu.utils.adapter.FragmentAdapter;
 
 import java.util.ArrayList;
 import java.util.List;

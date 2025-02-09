@@ -8,16 +8,21 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.huawei.hms.aaid.HmsInstanceId;
+import com.huawei.hms.common.ApiException;
+import com.huawei.hms.push.HmsMessaging;
 import com.hyphenate.EMCallBack;
 import com.hyphenate.EMConnectionListener;
 import com.hyphenate.EMError;
@@ -31,12 +36,21 @@ import com.zhoujh.lvtu.find.FindFragment;
 import com.zhoujh.lvtu.main.MainFragment;
 import com.zhoujh.lvtu.message.MessageFragment;
 import com.zhoujh.lvtu.personal.PersonalFragment;
-import com.zhoujh.lvtu.utils.LocalDateTimeAdapter;
+import com.zhoujh.lvtu.utils.Utils;
+import com.zhoujh.lvtu.utils.adapter.LocalDateTimeAdapter;
 import com.zhoujh.lvtu.utils.StatusBarUtils;
 import com.zhoujh.lvtu.login.LoginActivity;
-import com.zhoujh.lvtu.model.User;
+import com.zhoujh.lvtu.utils.modle.User;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
+
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "MainActivity";
@@ -48,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
     private BottomNavigationView bottomNavigationView;
-    private EMMessageListener msgListener;
+    public static EMMessageListener msgListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,23 +77,65 @@ public class MainActivity extends AppCompatActivity {
         // 权限申请
         checkPermissions();
 
+        // HMS 推送自动初始化
+        setAutoInitEnabled(true);
+
         // 沉浸式导航栏
         StatusBarUtils.setImmersiveStatusBar(this, getWindow().getDecorView(),StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
 
-        // 检查跳转附带的信息
-        if (getIntent().getStringExtra("user") == null) {
-            Toast.makeText(this, "请先登录！", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(this, LoginActivity.class);
-            startActivity(intent);
-        } else{
+        // 从 SharedPreferences 中读取账号和密码
+        SharedPreferences sharedPreferences = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE);
+        String savedUsername = sharedPreferences.getString(LoginActivity.KEY_PHONE_NUM, null);
+        String savedPassword = sharedPreferences.getString(LoginActivity.KEY_PASSWORD, null);
+        if(getIntent().getStringExtra("user") != null){
             Log.e(TAG, "user: " + getIntent().getStringExtra("user"));
             user = gson.fromJson(getIntent().getStringExtra("user"), User.class);
             USER_ID = user.getUserId();
+
+            getToken();// HMS 推送
             initView();
             initHuanXin();
+        } else if (savedUsername != null && savedPassword != null) {
+            // 如果已保存账号和密码，直接使用这些信息进行登录
+            autoLogin(savedUsername, savedPassword);
+        } else {
+            Toast.makeText(this, "请先登录！", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
+            finish();
         }
     }
+    private void getToken() {
+        Log.i(TAG, "get token");
+        // 创建一个新线程
+        new Thread(() -> {
+            try {
+                // 从agconnect-services.json文件中读取APP_ID
+                String appId = "113389873";
 
+                // 输入token标识"HCM"
+                String tokenScope = "HCM";
+                String token = HmsInstanceId.getInstance(MainActivity.this).getToken(appId, tokenScope);
+                Log.i(TAG, "get token success");
+
+                // 判断token是否为空
+                if(!TextUtils.isEmpty(token)) {
+                    LvtuHmsMessageService.refreshedTokenToServer(token);
+                }
+            } catch (ApiException e) {
+                Log.e(TAG, "get token failed, " + e);
+            }
+        }).start();
+    }
+    private void setAutoInitEnabled(final boolean isEnable) {
+        if(isEnable){
+            // 设置自动初始化
+            HmsMessaging.getInstance(this).setAutoInitEnabled(true);
+        } else {
+            // 禁止自动初始化
+            HmsMessaging.getInstance(this).setAutoInitEnabled(false);
+        }
+    }
     private void checkPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.System.canWrite(this)) {
@@ -210,6 +266,67 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
     }
+    private void autoLogin(String phoneNum, String password) {
+        //登录or注册
+        user = new User();
+        user.setPhoneNum(phoneNum);
+        user.setPassword(Utils.md5(password));
+        new Thread(() -> {
+            OkHttpClient client = new OkHttpClient();
+            RequestBody requestBody = RequestBody.create(
+                    gson.toJson(user),
+                    MediaType.parse("application/json; charset=utf-8"));
+            Request request = new Request.Builder()
+                    .url(LoginActivity.loginUrl)
+                    .post(requestBody)
+                    .build();
+            try {
+                Response response = client.newCall(request).execute();
+                if (response.isSuccessful()) {
+                    ResponseBody responseBody = response.body();
+                    if (responseBody != null) {
+                        String responseData = responseBody.string();
+                        if (!responseData.isEmpty()) {
+                            Log.i(TAG, "登录成功: " + responseData);
+                            runOnUiThread(() -> {
+                                Toast.makeText(MainActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
+                                // 保存账号和密码到SharedPreferences
+                                SharedPreferences sharedPreferences = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE);
+                                SharedPreferences.Editor editor = sharedPreferences.edit();
+                                editor.putString(LoginActivity.KEY_PHONE_NUM, phoneNum);
+                                editor.putString(LoginActivity.KEY_PASSWORD, password);
+                                editor.apply(); // 异步保存 或者使用 editor.commit();同步保存 但会阻塞主线程
+
+                                user = gson.fromJson(responseData, User.class);
+                                USER_ID = user.getUserId();
+
+                                getToken();// HMS 推送
+                                initView();
+                                initHuanXin();
+                            });
+                        } else {
+                            runOnUiThread(() -> {
+                                // 服务器返回null 的时候 responseData.isEmpty()会为true（内容为空） 但responseData本身不是null（对象非空）
+                                Toast.makeText(MainActivity.this, "密码错误", Toast.LENGTH_SHORT).show();
+                            });
+                        }
+                    } else {
+                        runOnUiThread(() -> {
+                            Toast.makeText(MainActivity.this, "响应为空", Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                } else {
+                    runOnUiThread(() -> {
+                        Toast.makeText(MainActivity.this, "网络错误", Toast.LENGTH_SHORT).show();
+                    });
+                }
+            } catch (IOException e) {
+                runOnUiThread(() -> {
+                    Toast.makeText(MainActivity.this, "请求失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).start();
+    }
     private void loginHuanXin(){
         // 登录
         EMClient.getInstance().login(createHXId(user.getUserId()), "123123", new EMCallBack() {
@@ -246,7 +363,7 @@ public class MainActivity extends AppCompatActivity {
                 if (code == EMError.USER_ALREADY_LOGIN){
                     Log.i(TAG, "用户已登录");
                 }else {
-                    Log.i(TAG, "环信登录失败");
+                    Log.i(TAG, "环信登录失败 code:" + code + " error:" + error);
                 }
             }
         });
@@ -275,8 +392,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         // 注销消息监听
-        EMClient.getInstance().chatManager().removeMessageListener(msgListener);
-        EMClient.getInstance().logout(true);
+        if (msgListener != null) {
+            EMClient.getInstance().chatManager().removeMessageListener(msgListener);
+            EMClient.getInstance().logout(true);
+        }
     }
 
     @Override

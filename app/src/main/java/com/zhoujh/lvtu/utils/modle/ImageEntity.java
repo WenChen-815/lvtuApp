@@ -1,4 +1,4 @@
-package com.zhoujh.lvtu.model;
+package com.zhoujh.lvtu.utils.modle;
 
 import com.flyjingfish.openimagelib.beans.OpenImageUrl;
 import com.flyjingfish.openimagelib.enums.MediaType;

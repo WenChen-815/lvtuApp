@@ -1,4 +1,4 @@
-package com.zhoujh.lvtu.adapter;
+package com.zhoujh.lvtu.find.adapter;
 
 import static com.zhoujh.lvtu.utils.Utils.dpToPx;
 
@@ -26,9 +26,8 @@ import com.google.gson.Gson;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.find.PostDisplayActivity;
-import com.zhoujh.lvtu.model.Post;
-import com.zhoujh.lvtu.model.UserInfo;
-import com.zhoujh.lvtu.utils.Utils;
+import com.zhoujh.lvtu.find.modle.Post;
+import com.zhoujh.lvtu.utils.modle.UserInfo;
 
 import java.io.IOException;
 import java.util.List;

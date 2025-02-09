@@ -12,7 +12,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
-import android.view.animation.LinearInterpolator;
 import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -21,7 +20,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
@@ -39,26 +37,23 @@ import com.amap.api.maps.model.BitmapDescriptorFactory;
 import com.amap.api.maps.model.LatLng;
 import com.amap.api.maps.model.Marker;
 import com.amap.api.maps.model.MarkerOptions;
-import com.amap.api.maps.model.animation.Animation;
-import com.amap.api.maps.model.animation.RotateAnimation;
 import com.amap.api.services.core.AMapException;
 import com.amap.api.services.core.PoiItemV2;
 import com.amap.api.services.poisearch.PoiResultV2;
 import com.amap.api.services.poisearch.PoiSearchV2;
 import com.bumptech.glide.Glide;
+import com.google.gson.Gson;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
-import com.zhoujh.lvtu.adapter.PoiAdapter;
-import com.zhoujh.lvtu.personal.PersonalInfoActivity;
+import com.zhoujh.lvtu.main.adapter.PoiAdapter;
+import com.zhoujh.lvtu.main.modle.TravelPlan;
 import com.zhoujh.lvtu.utils.StatusBarUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -71,15 +66,15 @@ import okhttp3.Response;
 
 public class AddTravelPlanActivity extends AppCompatActivity {
     private final String TAG = "AddTravelPlanActivity";
+    private final Gson gson = MainActivity.gson;
+    private TravelPlan travelPlan;
 
     private ImageView backBtn;
     private TextView planTitle;
     private TextView planUploadBtn;
-    private EditText inputTitle;
     private EditText inputContent;
     private EditText maxParticipants;
     private EditText budget;
-    private TextView budgetUnit;
     private EditText addressInput;
     private MapView mapView;
     private Spinner spGender;
@@ -114,13 +109,12 @@ public class AddTravelPlanActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        StatusBarUtils.setImmersiveStatusBar(this, findViewById(R.id.root_personal_info), StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
+        StatusBarUtils.setImmersiveStatusBar(this, null, StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
 
         // 设置隐私政策弹窗告知用户
         MapsInitializer.updatePrivacyShow(this, true, true);
         // 用户同意隐私政策
         MapsInitializer.updatePrivacyAgree(this, true);
-        StatusBarUtils.setImmersiveStatusBar(this, null, StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
 
         initView();
         setListener();
@@ -166,6 +160,36 @@ public class AddTravelPlanActivity extends AppCompatActivity {
 
         initMap(aMap);
 
+        if (getIntent().getStringExtra("travelPlan")!=null){
+            travelPlan = gson.fromJson(getIntent().getStringExtra("travelPlan"), TravelPlan.class);
+            setData();
+        }
+
+    }
+
+    private void setData() {
+        if (travelPlan != null) {
+            planTitle.setText(travelPlan.getTitle());
+            inputContent.setText(travelPlan.getContent());
+            if (travelPlan.getImageUrl() != null) {
+                Glide.with(getApplicationContext())
+                        .load("http://"+MainActivity.IP + travelPlan.getImageUrl())
+                        .placeholder(R.drawable.headimg)  // 设置占位图
+                        .into(inputImage);
+
+            }
+            if (travelPlan.getAddress() != null) {
+                addressInput.setText(travelPlan.getAddress());
+                addressLatitude = travelPlan.getLatitude();
+                addressLongitude = travelPlan.getLongitude();
+                aMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(addressLatitude, addressLongitude), 15));
+            }
+            startTime.setText(dateFormatter.format(travelPlan.getStartTime()));
+            endTime.setText(dateFormatter.format(travelPlan.getEndTime()));
+            budget.setText(String.format("%.2f", travelPlan.getBudget()));
+            maxParticipants.setText(String.valueOf(travelPlan.getMaxParticipants()));
+            spGender.setSelection(travelPlan.getTravelMode());
+        }
     }
 
     private void setListener() {
@@ -234,60 +258,60 @@ public class AddTravelPlanActivity extends AppCompatActivity {
             }).start();
         });
 
-        addressInput.addTextChangedListener(new
+        addressInput.addTextChangedListener(new TextWatcher() {
 
-                                                    TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
-                                                        @Override
-                                                        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
-                                                        }
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                Log.i(TAG, "onTextChanged");
+                PoiSearchV2.Query query = new PoiSearchV2.Query(addressInput.getText().toString(), "", "");
+                query.setPageSize(10);
+                query.setPageNum(0);
+                // 创建POI搜索
+                PoiSearchV2 poiSearch = null;
+                try {
+                    poiSearch = new PoiSearchV2(AddTravelPlanActivity.this, query);
+                } catch (AMapException e) {
+                    throw new RuntimeException(e);
+                }
+                poiSearch.setOnPoiSearchListener(new PoiSearchV2.OnPoiSearchListener() {
+                    @Override
+                    public void onPoiSearched(PoiResultV2 poiResultV2, int i) {
+                        Log.i(TAG, "onPoiSearched code=" + i);
+                        poiItemV2List.clear();
+                        poiItemV2List.addAll(poiResultV2.getPois());
+                        // 若当前城市查询不到所需POI信息，可以通过result.getSearchSuggestionCitys()获取当前Poi搜索的建议城市。
+                        //                List<SuggestionCity> suggestionCities = poiResult.getSearchSuggestionCitys();
+                        // 如果搜索关键字明显为误输入，则可通过result.getSearchSuggestionKeywords()方法得到搜索关键词建议。
+                        //                List<String> suggestionKeywords = poiResult.getSearchSuggestionKeywords();
+                        // 返回结果成功或者失败的响应码。1000为成功，其他为失败（详细信息参见网站开发指南-实用工具-错误码对照表）
+                        if (i == 1000) {
+                            // 搜索成功
+                            Log.i(TAG, "POI搜索成功");
+                            poiAdapter.notifyDataSetChanged(); // 通知适配器数据已更改
+                        } else {
+                            Toast.makeText(AddTravelPlanActivity.this, "搜索失败", Toast.LENGTH_SHORT).show();
+                        }
+                    }
 
-                                                        @Override
-                                                        public void onTextChanged(CharSequence s, int start, int before, int count) {
-                                                            PoiSearchV2.Query query = new PoiSearchV2.Query(addressInput.getText().toString(), "", "");
-                                                            query.setPageSize(10);
-                                                            query.setPageNum(0);
-                                                            // 创建POI搜索
-                                                            PoiSearchV2 poiSearch = null;
-                                                            try {
-                                                                poiSearch = new PoiSearchV2(AddTravelPlanActivity.this, query);
-                                                            } catch (AMapException e) {
-                                                                throw new RuntimeException(e);
-                                                            }
-                                                            poiSearch.setOnPoiSearchListener(new PoiSearchV2.OnPoiSearchListener() {
-                                                                @Override
-                                                                public void onPoiSearched(PoiResultV2 poiResultV2, int i) {
-                                                                    poiItemV2List.clear();
-                                                                    poiItemV2List.addAll(poiResultV2.getPois());
-                                                                    // 若当前城市查询不到所需POI信息，可以通过result.getSearchSuggestionCitys()获取当前Poi搜索的建议城市。
-//                List<SuggestionCity> suggestionCities = poiResult.getSearchSuggestionCitys();
-                                                                    // 如果搜索关键字明显为误输入，则可通过result.getSearchSuggestionKeywords()方法得到搜索关键词建议。
-//                List<String> suggestionKeywords = poiResult.getSearchSuggestionKeywords();
-                                                                    // 返回结果成功或者失败的响应码。1000为成功，其他为失败（详细信息参见网站开发指南-实用工具-错误码对照表）
-                                                                    if (i == 1000) {
-                                                                        // 搜索成功
-                                                                        Log.i(TAG, "POI搜索成功");
-                                                                        poiAdapter.notifyDataSetChanged(); // 通知适配器数据已更改
-                                                                    } else {
-                                                                        Toast.makeText(AddTravelPlanActivity.this, "搜索失败", Toast.LENGTH_SHORT).show();
-                                                                    }
-                                                                }
+                    @Override
+                    public void onPoiItemSearched(PoiItemV2 poiItemV2, int i) {
 
-                                                                @Override
-                                                                public void onPoiItemSearched(PoiItemV2 poiItemV2, int i) {
+                    }
+                });
+                poiSearch.searchPOIAsyn();
+                addressPoi.setVisibility(View.VISIBLE);
+            }
 
-                                                                }
-                                                            });
-                                                            poiSearch.searchPOIAsyn();
-                                                            addressPoi.setVisibility(View.VISIBLE);
-                                                        }
+            @Override
+            public void afterTextChanged(Editable s) {
 
-                                                        @Override
-                                                        public void afterTextChanged(Editable s) {
-
-                                                        }
-                                                    });
+            }
+        });
         startTime.setOnClickListener(v ->
 
         {
@@ -354,12 +378,9 @@ public class AddTravelPlanActivity extends AppCompatActivity {
 
         planTitle = findViewById(R.id.plan_title);
         planUploadBtn = findViewById(R.id.plan_upload_btn);
-        inputTitle = findViewById(R.id.input_title);
         inputContent = findViewById(R.id.input_content);
         maxParticipants = findViewById(R.id.maxParticipants);
         budget = findViewById(R.id.budget);
-        budgetUnit = findViewById(R.id.budget_unit);
-
         addressInput = findViewById(R.id.address);
 
         addressPoi = findViewById(R.id.address_poi);

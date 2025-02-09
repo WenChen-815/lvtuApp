@@ -1,9 +1,7 @@
-package com.zhoujh.lvtu.adapter;
+package com.zhoujh.lvtu.utils.adapter;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,7 +21,7 @@ import com.flyjingfish.openimagelib.listener.SourceImageViewIdGet;
 import com.flyjingfish.openimagelib.transformers.ScaleInTransformer;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
-import com.zhoujh.lvtu.model.ImageEntity;
+import com.zhoujh.lvtu.utils.modle.ImageEntity;
 
 import java.util.ArrayList;
 import java.util.List;

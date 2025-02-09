@@ -1,4 +1,4 @@
-package com.zhoujh.lvtu.model;
+package com.zhoujh.lvtu.utils.modle;
 
 import java.util.List;
 

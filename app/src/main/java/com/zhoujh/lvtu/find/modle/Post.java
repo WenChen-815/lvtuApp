@@ -1,4 +1,4 @@
-package com.zhoujh.lvtu.model;
+package com.zhoujh.lvtu.find.modle;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;

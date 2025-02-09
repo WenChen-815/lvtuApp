@@ -1,8 +1,6 @@
-package com.zhoujh.lvtu.adapter;
+package com.zhoujh.lvtu.main.adapter;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,11 +13,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.amap.api.services.core.PoiItemV2;
 import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.main.AddTravelPlanActivity;
-import com.zhoujh.lvtu.model.UserInfo;
 
 import java.util.List;
-
-import okhttp3.OkHttpClient;
 
 public class PoiAdapter extends RecyclerView.Adapter<PoiAdapter.PoiViewHolder>{
     private final List<PoiItemV2> poiItemV2List;

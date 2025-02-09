@@ -1,4 +1,4 @@
-package com.zhoujh.lvtu.utils;
+package com.zhoujh.lvtu.utils.adapter;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;

@@ -19,11 +19,9 @@ import com.scwang.smart.refresh.layout.listener.OnLoadMoreListener;
 import com.scwang.smart.refresh.layout.listener.OnRefreshListener;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
-import com.zhoujh.lvtu.adapter.PlanListAdapter;
-import com.zhoujh.lvtu.adapter.PostListAdapter;
-import com.zhoujh.lvtu.model.PageResponse;
-import com.zhoujh.lvtu.model.Post;
-import com.zhoujh.lvtu.model.TravelPlan;
+import com.zhoujh.lvtu.main.adapter.PlanListAdapter;
+import com.zhoujh.lvtu.utils.modle.PageResponse;
+import com.zhoujh.lvtu.main.modle.TravelPlan;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

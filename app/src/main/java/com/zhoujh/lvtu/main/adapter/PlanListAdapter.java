@@ -1,4 +1,4 @@
-package com.zhoujh.lvtu.adapter;
+package com.zhoujh.lvtu.main.adapter;
 
 import static com.zhoujh.lvtu.utils.Utils.dpToPx;
 
@@ -27,8 +27,8 @@ import com.google.gson.Gson;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.main.PlanDisplayActivity;
-import com.zhoujh.lvtu.model.TravelPlan;
-import com.zhoujh.lvtu.model.UserInfo;
+import com.zhoujh.lvtu.main.modle.TravelPlan;
+import com.zhoujh.lvtu.utils.modle.UserInfo;
 
 import java.io.IOException;
 import java.util.List;
@@ -66,6 +66,7 @@ public class PlanListAdapter extends RecyclerView.Adapter<PlanListAdapter.PlanVi
         holder.content.setEllipsize(travelPlan.getContent().length() > 20 ? TextUtils.TruncateAt.END : null);
         holder.content.setText(travelPlan.getContent());
         holder.currentParticipants.setText(String.valueOf(travelPlan.getCurrentParticipants()));
+        holder.currentParticipants.setTextColor(Color.parseColor("#FF03A9F4"));
         if(travelPlan.getMaxParticipants() > 0){
             if (travelPlan.getCurrentParticipants() >= travelPlan.getMaxParticipants()) {
                 holder.currentParticipants.setTextColor(Color.parseColor("#FF0000"));

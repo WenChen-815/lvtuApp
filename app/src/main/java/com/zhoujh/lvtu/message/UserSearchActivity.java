@@ -20,9 +20,9 @@ import com.scwang.smart.refresh.layout.listener.OnRefreshListener;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.utils.StatusBarUtils;
-import com.zhoujh.lvtu.adapter.UserAdapter;
-import com.zhoujh.lvtu.model.PageResponse;
-import com.zhoujh.lvtu.model.UserInfo;
+import com.zhoujh.lvtu.message.adapter.UserAdapter;
+import com.zhoujh.lvtu.utils.modle.PageResponse;
+import com.zhoujh.lvtu.utils.modle.UserInfo;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

@@ -1,17 +1,15 @@
-package com.zhoujh.lvtu.utils;
+package com.zhoujh.lvtu.utils.modle;
 
 import android.content.Context;
 import android.os.Handler;
-import android.util.Log;
 import android.view.Gravity;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.zhoujh.lvtu.R;
-import com.zhoujh.lvtu.adapter.BannerPagerAdapter;
+import com.zhoujh.lvtu.utils.adapter.BannerPagerAdapter;
 
 import java.util.ArrayList;
 import java.util.List;

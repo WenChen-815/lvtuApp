@@ -1,4 +1,4 @@
-package com.zhoujh.lvtu.adapter;
+package com.zhoujh.lvtu.find.adapter;
 
 import android.content.Context;
 import android.os.Handler;
@@ -21,7 +21,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.find.PostDisplayActivity;
-import com.zhoujh.lvtu.model.Comment;
+import com.zhoujh.lvtu.find.modle.Comment;
 import com.zhoujh.lvtu.utils.Utils;
 
 import java.io.IOException;

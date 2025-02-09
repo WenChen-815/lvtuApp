@@ -27,7 +27,6 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -39,7 +38,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.gson.Gson;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
-import com.zhoujh.lvtu.model.Post;
+import com.zhoujh.lvtu.find.modle.Post;
 
 import java.io.File;
 import java.io.FileInputStream;

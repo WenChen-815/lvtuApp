@@ -1,4 +1,4 @@
-package com.zhoujh.lvtu.adapter;
+package com.zhoujh.lvtu.utils.adapter;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;

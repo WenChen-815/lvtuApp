@@ -1,4 +1,4 @@
-package com.zhoujh.lvtu.model;
+package com.zhoujh.lvtu.utils.modle;
 
 public class UserInfo {
     private String userId;       // 用户ID (UUID)
