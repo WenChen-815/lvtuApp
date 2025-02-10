@@ -4,8 +4,25 @@ import android.content.Context;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Utils {
+    /**
+     * 获取""之间的内容
+     * @param str str
+     * @return str
+     */
+    public static String absContent(String str) {
+        Pattern pattern = Pattern.compile("\"(.*?)\"");
+        Matcher matcher = pattern.matcher(str);
+        if (matcher.find()) {
+            return matcher.group(1);
+        } else {
+            System.out.println("未找到匹配的内容");
+            return "";
+        }
+    }
     /**
      * 将dp转换为px
      * @param dp dp

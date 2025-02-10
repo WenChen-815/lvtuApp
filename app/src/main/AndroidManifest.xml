@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
-    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
@@ -24,8 +30,13 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:name="android.permission.WRITE_SETTINGS" tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
+    <uses-permission
+        android:name="android.permission.WRITE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+
     <queries>
         <package android:name="com.huawei.camera" />
     </queries>
@@ -34,7 +45,22 @@
             <action android:name="com.huawei.hms.core.aidlservice" />
         </intent>
     </queries>
-    <application android:allowBackup="true" android:dataExtractionRules="@xml/data_extraction_rules" android:fullBackupContent="@xml/backup_rules" android:icon="@mipmap/ic_launcher" android:label="@string/app_name" android:requestLegacyExternalStorage="true" android:supportsRtl="true" android:theme="@style/Theme.Lvtu" android:usesCleartextTraffic="true" tools:targetApi="31">
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:requestLegacyExternalStorage="true"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Lvtu"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="31">
+        <activity
+            android:name=".personal.UserInfoActivity"
+            android:exported="false" />
+
         <service
             android:name=".LvtuHmsMessageService"
             android:directBootAware="true"
@@ -43,34 +69,72 @@
                 <action android:name="com.huawei.push.action.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <activity android:name=".main.PlanDisplayActivity" android:exported="true" >
+
+        <activity
+            android:name=".main.PlanDisplayActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="lvtu"
+
+                <data
                     android:host="com.zhoujh.lvtu"
-                    android:path="/planDisplay"/>
+                    android:path="/planDisplay"
+                    android:scheme="lvtu" />
             </intent-filter>
         </activity>
-        <activity android:name=".main.AddTravelPlanActivity" android:exported="false" />
-        <activity android:name=".find.PostDisplayActivity" android:exported="false" />
-        <activity android:name=".find.AddPostActivity" android:exported="false" />
-        <activity android:name=".personal.PersonalInfoActivity" android:exported="false" />
-        <activity android:name=".message.UserSearchActivity" android:exported="false" />
-        <activity android:name=".login.LoginActivity" android:exported="false" />
-        <activity android:name="com.amap.api.maps.offlinemap.OfflineMapActivity" android:screenOrientation="portrait" />
-        <activity android:name=".MainActivity" android:exported="true">
+        <activity
+            android:name=".message.ChatActivity"
+            android:exported="false" />
+        <activity
+            android:name=".main.AddTravelPlanActivity"
+            android:exported="false" />
+        <activity
+            android:name=".find.PostDisplayActivity"
+            android:exported="false" />
+        <activity
+            android:name=".find.AddPostActivity"
+            android:exported="false" />
+        <activity
+            android:name=".personal.PersonalInfoActivity"
+            android:exported="false" />
+        <activity
+            android:name=".message.UserSearchActivity"
+            android:exported="false" />
+        <activity
+            android:name=".login.LoginActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.amap.api.maps.offlinemap.OfflineMapActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.fileprovider" android:exported="false" android:grantUriPermissions="true">
-            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/provider_paths" />
-        </provider>
-        <meta-data android:name="com.amap.api.v2.apikey" android:value="36f729f07562276cef6c3e3ff4df6826" />
-        <meta-data android:name="com.huawei.hms.client.channel.androidMarket" android:value="false" />
-    </application>
-</manifest>
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
+
+        <meta-data
+            android:name="com.amap.api.v2.apikey"
+            android:value="36f729f07562276cef6c3e3ff4df6826" />
+        <meta-data
+            android:name="com.huawei.hms.client.channel.androidMarket"
+            android:value="false" />
+    </application>
+
+</manifest>

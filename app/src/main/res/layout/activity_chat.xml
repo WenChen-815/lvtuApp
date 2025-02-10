@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".message.ChatActivity">
+
+    <RelativeLayout
+        android:id="@+id/head"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:paddingVertical="7dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/back"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="6dp"
+            android:src="@drawable/back" />
+
+        <LinearLayout
+            android:id="@+id/user_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginStart="10dp">
+
+            <ImageView
+                android:id="@+id/avatar"
+                android:layout_width="36dp"
+                android:layout_height="36dp" />
+
+            <TextView
+                android:id="@+id/user_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="温水煮星辰"
+                android:textColor="@color/black"
+                android:textSize="17sp" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/mChatInputPanel"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/head"/>
+
+    <TextView
+        android:id="@+id/ai_tv"
+        android:layout_width="250dp"
+        android:layout_height="200dp"
+        android:text="我是AI助手"
+        android:layout_marginTop="100dp"
+        android:background="#EEEEEE"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/mChatInputPanel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingVertical="12dp"
+        android:paddingHorizontal="6dp"
+        android:background="#EEEEEE"
+
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/recyclerView">
+
+
+        <EditText
+            android:id="@+id/chatInputEt"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:background="@drawable/background_frame_1"
+            android:hint=" 请友好交流哦"
+            android:paddingHorizontal="5dp"
+            android:paddingVertical="3dp"
+            android:textSize="13sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/send"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/send"
+            android:layout_width="50dp"
+            android:layout_height="35dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/blue_round_button"
+            android:text="发送"
+            android:textColor="#FFFFFF"
+
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/chatInputEt"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

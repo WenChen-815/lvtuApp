@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:id="@+id/root_layout"
+    tools:context=".personal.UserInfoActivity">
+    <RelativeLayout
+        android:id="@+id/head"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="7dp"
+        android:layout_alignParentTop="true">
+        <ImageView
+            android:id="@+id/back"
+            android:src="@drawable/back"
+            android:layout_marginStart="6dp"
+            android:layout_alignParentLeft="true"
+            android:layout_width="30dp"
+            android:layout_height="30dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginLeft="10dp"
+            android:textColor="#0c0c0c"
+            android:text="个人信息"
+            android:textStyle="bold"
+            android:textSize="18dp" />
+    </RelativeLayout>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/head"
+        android:layout_above="@+id/to_chat">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="100dp">
+                <ImageView
+                    android:id="@+id/avatar"
+                    android:layout_marginLeft="10dp"
+                    android:layout_centerVertical="true"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"/>
+                <TextView
+                    android:id="@+id/user_name"
+                    android:layout_marginLeft="100dp"
+                    android:layout_centerVertical="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="用户名"
+                    android:textColor="#0c0c0c"
+                    android:textSize="18sp"/>
+                <Button
+                    android:id="@+id/follow"
+                    android:layout_width="75dp"
+                    android:layout_height="30dp"
+                    android:text="关注"
+                    android:textSize="16sp"
+                    android:textColor="@color/white"
+                    android:background="@drawable/round_button_unfollowed_background"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginRight="20dp"/>
+            </RelativeLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="70dp">
+                <RelativeLayout
+                    android:id="@+id/plan"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/post">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:layout_marginTop="15dp"
+                        android:textSize="18sp"
+                        android:textColor="@color/black"
+                        android:text="TA的计划" />
+
+                </RelativeLayout>
+                <RelativeLayout
+                    android:id="@+id/post"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/plan">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:layout_marginTop="15dp"
+                        android:textSize="18sp"
+                        android:textColor="@color/black"
+                        android:text="TA的帖子" />
+
+                </RelativeLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/data_list"
+                android:layout_marginRight="5dp"
+                android:layout_marginLeft="5dp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+        </LinearLayout>
+
+    </ScrollView>
+    <Button
+        android:id="@+id/to_chat"
+        android:layout_width="match_parent"
+        android:layout_height="45dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="10dp"
+        android:text="发消息"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:background="@drawable/blue_round_button"/>
+</RelativeLayout>

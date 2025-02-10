@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.zhoujh.lvtu.LvtuHmsMessageService;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.utils.Utils;
@@ -82,11 +83,14 @@ public class LoginActivity extends AppCompatActivity {
                             Log.i(TAG, "登录成功: " + responseData);
                             runOnUiThread(() -> {
                                 Toast.makeText(LoginActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
+                                User user = gson.fromJson(responseData, User.class);
                                 // 保存账号和密码到SharedPreferences
                                 SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
                                 SharedPreferences.Editor editor = sharedPreferences.edit();
                                 editor.putString(KEY_PHONE_NUM, phoneNum);
                                 editor.putString(KEY_PASSWORD, password);
+                                editor.putString("userId", user.getUserId());
+                                LvtuHmsMessageService.setCurrentUserId(user.getUserId());
                                 editor.apply(); // 异步保存 或者使用 editor.commit();同步保存 但会阻塞主线程
 
                             });

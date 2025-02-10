@@ -1,6 +1,7 @@
 package com.zhoujh.lvtu.message.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
@@ -10,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -19,8 +21,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.bumptech.glide.request.RequestOptions;
+import com.google.gson.Gson;
+import com.hyphenate.chat.EMClient;
+import com.hyphenate.exceptions.HyphenateException;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
+import com.zhoujh.lvtu.personal.UserInfoActivity;
+import com.zhoujh.lvtu.utils.HuanXinUtils;
 import com.zhoujh.lvtu.utils.modle.UserInfo;
 
 import java.util.List;
@@ -36,6 +43,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     private final List<UserInfo> userInfoList;
     private final Context context;
     private final OkHttpClient okHttpClient = new OkHttpClient();
+    private final Gson gson = MainActivity.gson;
     private final Handler handler = new Handler(Looper.getMainLooper());
 
     public UserAdapter(List<UserInfo> userInfoList, Context context) {
@@ -70,6 +78,11 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
                     break;
             }
         });
+        holder.userItem.setOnClickListener(v -> {
+            Intent intent = new Intent(context, UserInfoActivity.class);
+            intent.putExtra("userInfo", gson.toJson(userInfo));
+            context.startActivity(intent);
+        });
         RequestOptions requestOptions = new RequestOptions()
                 .transform(new CircleCrop());
         Glide.with(context)
@@ -99,6 +112,19 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
                             Log.e("UserAdapter", "update relationship error");
                         } else {
                             Log.i("UserAdapter", "relationship：" + responseData);
+//                            if(responseData == 2){ // 互关自动成为好友
+//                                new Thread(()->{
+//                                    // 添加好友。
+//                                    // 同步方法，会阻塞当前线程。异步方法为 asyncAddContact(String, String, EMCallBack)。
+//                                    try {
+//                                        Log.i("UserAdapter", "add contact: "+ HuanXinUtils.createHXId(userInfo.getUserId()));
+//                                        EMClient.getInstance().contactManager().addContact(HuanXinUtils.createHXId(userInfo.getUserId()), null);
+//                                    } catch (HyphenateException e) {
+//                                        Log.e("UserAdapter", "add contact error. code: "+e.getErrorCode());
+//                                        throw new RuntimeException(e);
+//                                    }
+//                                }).start();
+//                            }
                             setFollowStateUI(holder, responseData, position);
                         }
                     });
@@ -118,12 +144,14 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     static class UserViewHolder extends RecyclerView.ViewHolder {
         TextView userName, followState;
         ImageView imgAvatar;
+        RelativeLayout userItem;
 
         public UserViewHolder(@NonNull View itemView) {
             super(itemView);
             userName = itemView.findViewById(R.id.user_name);
             followState = itemView.findViewById(R.id.follow_state);
             imgAvatar = itemView.findViewById(R.id.user_avatar);
+            userItem = itemView.findViewById(R.id.user_item);
         }
     }
 

@@ -1,6 +1,7 @@
 package com.zhoujh.lvtu.find;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -14,6 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,6 +39,8 @@ import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.find.adapter.CommentAdapter;
 import com.zhoujh.lvtu.find.modle.Comment;
 import com.zhoujh.lvtu.find.modle.Post;
+import com.zhoujh.lvtu.personal.UserInfoActivity;
+import com.zhoujh.lvtu.utils.FollowUtils;
 import com.zhoujh.lvtu.utils.modle.UserInfo;
 import com.zhoujh.lvtu.utils.modle.Carousel;
 import com.zhoujh.lvtu.utils.NoScrollRecyclerView;
@@ -87,6 +91,7 @@ public class PostDisplayActivity extends AppCompatActivity {
     private NoScrollRecyclerView commentListView;
     private EditText chatInputEt;
     private ScrollView scrollView;
+    private RelativeLayout userItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,11 +146,11 @@ public class PostDisplayActivity extends AppCompatActivity {
                                     .into(avatar);
                             if (creatorInfo.getRelationship() == 0) {
                                 // 设置UI为未关注状态
-                                setFollowUI("+关注", Color.parseColor("#FFFFFF"), R.drawable.round_button_unfollowed_background);
+                                FollowUtils.setFollowUI("+关注", Color.parseColor("#FFFFFF"), R.drawable.round_button_unfollowed_background, follow, this);
                             } else if (creatorInfo.getRelationship() == 1) {
-                                setFollowUI("已关注", Color.parseColor("#181A23"), R.drawable.round_button_followed_background);
+                                FollowUtils.setFollowUI("已关注", Color.parseColor("#181A23"), R.drawable.round_button_followed_background, follow, this);
                             } else if (creatorInfo.getRelationship() == 2) {
-                                setFollowUI("互关", Color.parseColor("#181A23"), R.drawable.round_button_followed_background);
+                                FollowUtils.setFollowUI("互关", Color.parseColor("#181A23"), R.drawable.round_button_followed_background, follow, this);
                             } else if (creatorInfo.getRelationship() == 3) {
                                 Log.e(TAG, "获取到拉黑用户信息！");
                             }
@@ -161,21 +166,6 @@ public class PostDisplayActivity extends AppCompatActivity {
                 throw new RuntimeException(e);
             }
         }).start();
-    }
-
-    /**
-     * 设置关注按钮的UI
-     *
-     * @param followStr  关注按钮的文字
-     * @param textColor  文本颜色
-     * @param drawableId 背景
-     */
-    private void setFollowUI(String followStr, int textColor, int drawableId) {
-        Drawable drawable;
-        follow.setText(followStr);
-        follow.setTextColor(textColor);
-        drawable = ContextCompat.getDrawable(getApplicationContext(), drawableId);
-        follow.setBackground(drawable);
     }
 
     private void setData(Post post) {
@@ -238,117 +228,15 @@ public class PostDisplayActivity extends AppCompatActivity {
         rootLayout = findViewById(R.id.root_layout);
         mChatInputPanel = findViewById(R.id.mChatInputPanel);
         cancelReplyBtn = findViewById(R.id.cancelReply);
+        userItem = findViewById(R.id.user_item);
     }
 
     public void setListener() {
-        //点击头像跳转个人信息页
-//        avatar.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Intent intent = new Intent(PostDisplayActivity.this, UserInfoActivity.class);
-//                intent.putExtra("AuthorId", postWithUserInfo.getUserInfo().getUserId());
-//                startActivity(intent);
-//            }
-//        });
-
-//        follow.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                //处理关注点击事件
-//                if (status==""){
-//                    showLoginDialog();
-//                } else if (MainActivity.USER_ID.equals(post.getUserId())) {
-//                    //提示
-//                    Toast.makeText(PostDisplayActivity.this, "不能关注自己", Toast.LENGTH_SHORT).show();
-//                } else {
-//                    try {
-//                        //未关注，进行关注
-//                        if(!isFollowed(postWithUserInfo.getUserInfo().getUserId())){
-//                            follow.setBackground(getResources().getDrawable(R.drawable.round_button_followed_background));
-//                            follow.setTextColor(Color.parseColor("#181A23"));
-//                            follow.setText("已关注");
-//                            new Thread(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    //进行关注
-//                                    OkHttpClient client1 = new OkHttpClient();
-//                                    RequestBody formBody = new FormBody.Builder()
-//                                            .add("userId", userId)
-//                                            .add("followId", postWithUserInfo.getUserInfo().getUserId())
-//                                            .build();
-//                                    Request request = new Request.Builder()
-//                                            .url(url+"follow/addFollow")
-//                                            .post(formBody)
-//                                            .build();
-//                                    //发起请求
-//                                    try {
-//                                        Response response = client1.newCall(request).execute();
-//                                        //检测请求是否成功
-//                                        if (response.isSuccessful()){
-//
-//                                        }
-//                                    } catch (IOException e) {
-//                                        e.printStackTrace();
-//                                    }
-//                                }
-//                            }).start();
-//                        }else{
-//                            //已关注，取消关注
-//                            //弹出确认窗口
-//                            AlertDialog.Builder builder = new AlertDialog.Builder(PostDisplayActivity.this);
-//                            builder.setTitle("取消关注");
-//                            builder.setMessage("确定取消关注吗？");
-//                            builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-//                                public void onClick(DialogInterface dialog, int which) {
-//                                    //已关注，取消关注
-//                                    follow.setText("关注");
-//                                    follow.setTextColor(Color.parseColor("#ffffff"));
-//                                    follow.setBackground(getResources().getDrawable(R.drawable.round_button_unfollowed_background));
-//                                    isFollow = false;
-//                                    new Thread(new Runnable() {
-//                                        @Override
-//                                        public void run() {
-//                                            String deleteUrl = url+"follow/deleteFollow";
-//                                            //进行关注
-//                                            OkHttpClient client1 = new OkHttpClient();
-//                                            RequestBody formBody = new FormBody.Builder()
-//                                                    .add("userId", userId)
-//                                                    .add("followId", postWithUserInfo.getUserInfo().getUserId())
-//                                                    .build();
-//                                            Request request = new Request.Builder()
-//                                                    .url(deleteUrl)
-//                                                    .post(formBody)
-//                                                    .build();
-//                                            //发起请求
-//                                            try {
-//                                                Response response = client1.newCall(request).execute();
-//                                                //检测请求是否成功
-//                                                if (response.isSuccessful()){
-//
-//                                                }
-//                                            } catch (IOException e) {
-//                                                e.printStackTrace();
-//                                            }
-//                                        }
-//                                    }).start();
-//
-//                                }
-//                            });
-//                            builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-//                                @Override
-//                                public void onClick(DialogInterface dialog, int which) {
-//                                    dialog.dismiss();
-//                                }
-//                            });
-//                            builder.show();
-//                        }
-//
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//        });
+        userItem.setOnClickListener(v -> {
+            Intent intent = new Intent(this, UserInfoActivity.class);
+            intent.putExtra("userInfo", gson.toJson(creatorInfo));
+            startActivity(intent);
+        });
 //        menuBtn.setOnClickListener(new View.OnClickListener() {
 //            @Override
 //            public void onClick(View view) {
@@ -601,13 +489,18 @@ public class PostDisplayActivity extends AppCompatActivity {
             if (creatorInfo.getUserId().equals(MainActivity.USER_ID)) {
                 Toast.makeText(PostDisplayActivity.this, "不能关注自己", Toast.LENGTH_SHORT).show();
             } else {
+                int newRelationship;
                 switch (creatorInfo.getRelationship()) {
                     case 0:
-                        updateFollow(creatorInfo, 1);
+                        newRelationship = FollowUtils.updateFollow(creatorInfo, 1, follow,this);
+                        Log.i(TAG, "relationship：" + newRelationship);
+                        creatorInfo.setRelationship(newRelationship);
                         break;
                     case 1:
                     case 2:
-                        updateFollow(creatorInfo, 0);
+                        newRelationship = FollowUtils.updateFollow(creatorInfo, 0, follow,this);
+                        Log.i(TAG, "relationship：" + newRelationship);
+                        creatorInfo.setRelationship(newRelationship);
                         break;
                     default:
                         break;
@@ -638,11 +531,11 @@ public class PostDisplayActivity extends AppCompatActivity {
                             Log.i(TAG, "relationship：" + responseData);
                             if (responseData == 0) {
                                 // 设置UI为未关注状态
-                                setFollowUI("+关注", Color.parseColor("#FFFFFF"), R.drawable.round_button_unfollowed_background);
+                                FollowUtils.setFollowUI("+关注", Color.parseColor("#FFFFFF"), R.drawable.round_button_unfollowed_background, follow, this);
                             } else if (responseData == 1) {
-                                setFollowUI("已关注", Color.parseColor("#181A23"), R.drawable.round_button_followed_background);
+                                FollowUtils.setFollowUI("已关注", Color.parseColor("#181A23"), R.drawable.round_button_followed_background, follow, this);
                             } else if (responseData == 2) {
-                                setFollowUI("互关", Color.parseColor("#181A23"), R.drawable.round_button_followed_background);
+                                FollowUtils.setFollowUI("互关", Color.parseColor("#181A23"), R.drawable.round_button_followed_background, follow, this);
                             } else if (responseData == 3) {
                                 Log.e(TAG, "获取到拉黑用户信息！");
                             }

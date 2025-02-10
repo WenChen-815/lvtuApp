@@ -3,7 +3,6 @@ package com.zhoujh.lvtu.main;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
@@ -13,12 +12,12 @@ import android.widget.Button;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -32,6 +31,8 @@ import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.find.modle.PlanParticipant;
 import com.zhoujh.lvtu.main.modle.TravelPlan;
+import com.zhoujh.lvtu.personal.UserInfoActivity;
+import com.zhoujh.lvtu.utils.FollowUtils;
 import com.zhoujh.lvtu.utils.Utils;
 import com.zhoujh.lvtu.utils.modle.UserInfo;
 import com.zhoujh.lvtu.utils.modle.Carousel;
@@ -74,6 +75,7 @@ public class PlanDisplayActivity extends AppCompatActivity {
     private TextView status, time, maxParticipants, currentParticipants, budget, address, travelMode;
     private TextView userName;
     private HorizontalScrollView scroll;
+    private RelativeLayout userItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -159,23 +161,26 @@ public class PlanDisplayActivity extends AppCompatActivity {
                         participants.addAll(gson.fromJson(responseData, new com.google.gson.reflect.TypeToken<List<UserInfo>>() {}.getType()));
                         boolean isParticipant = participants.stream().anyMatch(participant -> participant.getUserId().equals(MainActivity.USER_ID));
                         displayCurrentParticipants();
-                        if (isParticipant) {
-                            SUBMIT_TYPE = 1;
-                            runOnUiThread(()->{
-                                submit.setText("退出");
-                            });
-                        } else if (travelPlan.getCurrentParticipants() >= travelPlan.getMaxParticipants()) {
-                            SUBMIT_TYPE = 3;
-                            runOnUiThread(()->{
-                                submit.setText("已满员");
-                                submit.setEnabled(false);
-                            });
-                        } else {
-                            SUBMIT_TYPE = 2;
-                            runOnUiThread(()->{
-                                submit.setText("和TA一起");
-                            });
+                        if(SUBMIT_TYPE != 5){
+                            if (isParticipant) {
+                                SUBMIT_TYPE = 1;
+                                runOnUiThread(()->{
+                                    submit.setText("退出");
+                                });
+                            } else if (travelPlan.getCurrentParticipants() >= travelPlan.getMaxParticipants()) {
+                                SUBMIT_TYPE = 3;
+                                runOnUiThread(()->{
+                                    submit.setText("已满员");
+                                    submit.setEnabled(false);
+                                });
+                            } else {
+                                SUBMIT_TYPE = 2;
+                                runOnUiThread(()->{
+                                    submit.setText("和TA一起");
+                                });
+                            }
                         }
+
                     }
                 } else {
                     Log.e(TAG, "参与者查询失败：" + response.code());
@@ -276,6 +281,11 @@ public class PlanDisplayActivity extends AppCompatActivity {
     }
 
     private void setListener() {
+        userItem.setOnClickListener(v -> {
+            Intent intent = new Intent(this, UserInfoActivity.class);
+            intent.putExtra("userInfo", gson.toJson(creatorInfo));
+            startActivity(intent);
+        });
         // 监听布局变化
         rootLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -300,13 +310,18 @@ public class PlanDisplayActivity extends AppCompatActivity {
             if (creatorInfo.getUserId().equals(MainActivity.USER_ID)) {
                 Toast.makeText(PlanDisplayActivity.this, "不能关注自己", Toast.LENGTH_SHORT).show();
             } else {
+                int newRelationship;
                 switch (creatorInfo.getRelationship()) {
                     case 0:
-                        updateFollow(creatorInfo, 1);
+                        newRelationship = FollowUtils.updateFollow(creatorInfo, 1, follow,this);
+                        Log.i(TAG, "relationship：" + newRelationship);
+                        creatorInfo.setRelationship(newRelationship);
                         break;
                     case 1:
                     case 2:
-                        updateFollow(creatorInfo, 0);
+                        newRelationship = FollowUtils.updateFollow(creatorInfo, 0,follow,this);
+                        Log.i(TAG, "relationship：" + newRelationship);
+                        creatorInfo.setRelationship(newRelationship);
                         break;
                     default:
                         break;
@@ -475,47 +490,7 @@ public class PlanDisplayActivity extends AppCompatActivity {
         travelMode = findViewById(R.id.travel_mode);
         address = findViewById(R.id.address);
         scroll = findViewById(R.id.participants_container);
-    }
-
-    private void updateFollow(UserInfo creatorInfo, int newRelationship) {
-        Thread thread = new Thread(() -> {
-            RequestBody requestBody = new MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart("userId", MainActivity.USER_ID)
-                    .addFormDataPart("relatedUserId", creatorInfo.getUserId())
-                    .addFormDataPart("relationshipType", String.valueOf(newRelationship))
-                    .build();
-            Request request = new Request.Builder()
-                    .url("http://" + MainActivity.IP + "/lvtu/relationship/update")
-                    .post(requestBody)
-                    .build();
-            try (Response response = client.newCall(request).execute()) {
-                if (response.isSuccessful() && response.body() != null) {
-                    int responseData = Integer.parseInt(response.body().string());
-                    runOnUiThread(() -> {
-                        if (responseData == -1) {
-                            Log.e(TAG, "update relationship error");
-                        } else {
-                            Log.i(TAG, "relationship：" + responseData);
-                            if (responseData == 0) {
-                                // 设置UI为未关注状态
-                                setFollowUI("+关注", Color.parseColor("#FFFFFF"), R.drawable.round_button_unfollowed_background);
-                            } else if (responseData == 1) {
-                                setFollowUI("已关注", Color.parseColor("#181A23"), R.drawable.round_button_followed_background);
-                            } else if (responseData == 2) {
-                                setFollowUI("互关", Color.parseColor("#181A23"), R.drawable.round_button_followed_background);
-                            } else if (responseData == 3) {
-                                Log.e(TAG, "获取到拉黑用户信息！");
-                            }
-                            creatorInfo.setRelationship(responseData);
-                        }
-                    });
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        thread.start();
+        userItem = findViewById(R.id.user_item);
     }
 
     private void findCreatorInfo(String creatorId) {
@@ -541,11 +516,11 @@ public class PlanDisplayActivity extends AppCompatActivity {
                                     .into(avatar);
                             if (creatorInfo.getRelationship() == 0) {
                                 // 设置UI为未关注状态
-                                setFollowUI("+关注", Color.parseColor("#FFFFFF"), R.drawable.round_button_unfollowed_background);
+                                FollowUtils.setFollowUI("+关注", Color.parseColor("#FFFFFF"), R.drawable.round_button_unfollowed_background, follow, this);
                             } else if (creatorInfo.getRelationship() == 1) {
-                                setFollowUI("已关注", Color.parseColor("#181A23"), R.drawable.round_button_followed_background);
+                                FollowUtils.setFollowUI("已关注", Color.parseColor("#181A23"), R.drawable.round_button_followed_background, follow, this);
                             } else if (creatorInfo.getRelationship() == 2) {
-                                setFollowUI("互关", Color.parseColor("#181A23"), R.drawable.round_button_followed_background);
+                                FollowUtils.setFollowUI("互关", Color.parseColor("#181A23"), R.drawable.round_button_followed_background, follow, this);
                             } else if (creatorInfo.getRelationship() == 3) {
                                 Log.e(TAG, "获取到拉黑用户信息！");
                             }
@@ -561,20 +536,5 @@ public class PlanDisplayActivity extends AppCompatActivity {
                 throw new RuntimeException(e);
             }
         }).start();
-    }
-
-    /**
-     * 设置关注按钮的UI
-     *
-     * @param followStr  关注按钮的文字
-     * @param textColor  文本颜色
-     * @param drawableId 背景
-     */
-    private void setFollowUI(String followStr, int textColor, int drawableId) {
-        Drawable drawable;
-        follow.setText(followStr);
-        follow.setTextColor(textColor);
-        drawable = ContextCompat.getDrawable(getApplicationContext(), drawableId);
-        follow.setBackground(drawable);
     }
 }

@@ -27,8 +27,10 @@ public class NotificationUtils {
                 .setContentTitle(title)
                 .setContentText(message)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setContentIntent(pendingIntent) // 设置点击通知时的PendingIntent
                 .setAutoCancel(true); // 点击通知后自动取消通知
+        if (pendingIntent != null) {
+            builder.setContentIntent(pendingIntent); // 设置点击通知时的PendingIntent
+        }
 
         // 获取通知管理器
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);

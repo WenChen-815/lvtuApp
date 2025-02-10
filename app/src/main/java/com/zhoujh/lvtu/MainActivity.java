@@ -25,6 +25,7 @@ import com.huawei.hms.common.ApiException;
 import com.huawei.hms.push.HmsMessaging;
 import com.hyphenate.EMCallBack;
 import com.hyphenate.EMConnectionListener;
+import com.hyphenate.EMContactListener;
 import com.hyphenate.EMError;
 import com.hyphenate.EMMessageListener;
 import com.hyphenate.EMValueCallBack;
@@ -32,10 +33,12 @@ import com.hyphenate.chat.EMClient;
 import com.hyphenate.chat.EMOptions;
 import com.hyphenate.chat.EMUserInfo;
 import com.hyphenate.exceptions.HyphenateException;
+import com.hyphenate.push.EMPushConfig;
 import com.zhoujh.lvtu.find.FindFragment;
 import com.zhoujh.lvtu.main.MainFragment;
 import com.zhoujh.lvtu.message.MessageFragment;
 import com.zhoujh.lvtu.personal.PersonalFragment;
+import com.zhoujh.lvtu.utils.HuanXinUtils;
 import com.zhoujh.lvtu.utils.Utils;
 import com.zhoujh.lvtu.utils.adapter.LocalDateTimeAdapter;
 import com.zhoujh.lvtu.utils.StatusBarUtils;
@@ -44,6 +47,7 @@ import com.zhoujh.lvtu.utils.modle.User;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -81,18 +85,17 @@ public class MainActivity extends AppCompatActivity {
         setAutoInitEnabled(true);
 
         // 沉浸式导航栏
-        StatusBarUtils.setImmersiveStatusBar(this, getWindow().getDecorView(),StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
+        StatusBarUtils.setImmersiveStatusBar(this, getWindow().getDecorView(), StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
 
         // 从 SharedPreferences 中读取账号和密码
         SharedPreferences sharedPreferences = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE);
         String savedUsername = sharedPreferences.getString(LoginActivity.KEY_PHONE_NUM, null);
         String savedPassword = sharedPreferences.getString(LoginActivity.KEY_PASSWORD, null);
-        if(getIntent().getStringExtra("user") != null){
+        if (getIntent().getStringExtra("user") != null) {
             Log.e(TAG, "user: " + getIntent().getStringExtra("user"));
             user = gson.fromJson(getIntent().getStringExtra("user"), User.class);
             USER_ID = user.getUserId();
 
-            getToken();// HMS 推送
             initView();
             initHuanXin();
         } else if (savedUsername != null && savedPassword != null) {
@@ -105,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
             finish();
         }
     }
+
     private void getToken() {
         Log.i(TAG, "get token");
         // 创建一个新线程
@@ -119,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, "get token success");
 
                 // 判断token是否为空
-                if(!TextUtils.isEmpty(token)) {
+                if (!TextUtils.isEmpty(token)) {
                     LvtuHmsMessageService.refreshedTokenToServer(token);
                 }
             } catch (ApiException e) {
@@ -127,8 +131,9 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
     }
+
     private void setAutoInitEnabled(final boolean isEnable) {
-        if(isEnable){
+        if (isEnable) {
             // 设置自动初始化
             HmsMessaging.getInstance(this).setAutoInitEnabled(true);
         } else {
@@ -136,6 +141,7 @@ public class MainActivity extends AppCompatActivity {
             HmsMessaging.getInstance(this).setAutoInitEnabled(false);
         }
     }
+
     private void checkPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.System.canWrite(this)) {
@@ -153,6 +159,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void initHuanXin() {
         EMOptions options = new EMOptions();
+        EMPushConfig.Builder builder = new EMPushConfig.Builder(this);
+        builder.enableHWPush();
+        // 将 pushconfig 设置为 ChatOptions
+        options.setPushConfig(builder.build());
         options.setAppKey("1121250105156229#demo");
         options.setIncludeSendMessageInMessageListener(true);
         // 其他 EMOptions 配置。
@@ -203,6 +213,44 @@ public class MainActivity extends AppCompatActivity {
         };
         // 注册连接状态监听
         EMClient.getInstance().addConnectionListener(connectionListener);
+        // 添加好友监听
+        EMClient.getInstance().contactManager().setContactListener(new EMContactListener() {
+            // 对方同意了好友请求。
+            @Override
+            public void onFriendRequestAccepted(String username) {
+            }
+
+            // 对方拒绝了好友请求。
+            @Override
+            public void onFriendRequestDeclined(String username) {
+            }
+
+            // 接收到好友请求。
+            @Override
+            public void onContactInvited(String username, String reason) {
+                Log.i(TAG, "收到好友请求");
+                runOnUiThread(() -> {
+                            Toast.makeText(MainActivity.this, "收到好友请求", Toast.LENGTH_SHORT).show();
+                        }
+                );
+//                        try {
+//                            EMClient.getInstance().contactManager().acceptInvitation(username);
+//                            Log.i(TAG, "同意好友请求");
+//                        } catch (HyphenateException e) {
+//                            throw new RuntimeException(e);
+//                        }
+            }
+
+            // 联系人被删除。
+            @Override
+            public void onContactDeleted(String username) {
+            }
+
+            // 联系人已添加。
+            @Override
+            public void onContactAdded(String username) {
+            }
+        });
         // 尝试注册登录
         isHuanXinRegistered(user);
     }
@@ -248,7 +296,7 @@ public class MainActivity extends AppCompatActivity {
         new Thread(() -> {
             try {
                 // 尝试使用提供的用户名和密码去注册
-                String huanXinId = createHXId(user.getUserId());
+                String huanXinId = HuanXinUtils.createHXId(user.getUserId());
                 EMClient.getInstance().createAccount(huanXinId, "123123");
                 // 如果没有抛出异常，说明注册成功
                 Log.i(TAG, "环信注册成功");
@@ -258,7 +306,7 @@ public class MainActivity extends AppCompatActivity {
                     // 如果捕获到的异常错误码表示用户已存在，说明账号已经注册过了
                     Log.i(TAG, "环信已注册");
                     loginHuanXin();
-                } else{
+                } else {
                     // 其他异常情况
                     e.printStackTrace();
                     Log.e(TAG, "环信注册异常");
@@ -266,6 +314,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
     }
+
     private void autoLogin(String phoneNum, String password) {
         //登录or注册
         user = new User();
@@ -289,18 +338,18 @@ public class MainActivity extends AppCompatActivity {
                         if (!responseData.isEmpty()) {
                             Log.i(TAG, "登录成功: " + responseData);
                             runOnUiThread(() -> {
+                                user = gson.fromJson(responseData, User.class);
+                                USER_ID = user.getUserId();
                                 Toast.makeText(MainActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
                                 // 保存账号和密码到SharedPreferences
                                 SharedPreferences sharedPreferences = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE);
                                 SharedPreferences.Editor editor = sharedPreferences.edit();
                                 editor.putString(LoginActivity.KEY_PHONE_NUM, phoneNum);
                                 editor.putString(LoginActivity.KEY_PASSWORD, password);
+                                editor.putString("userId", USER_ID);
+                                LvtuHmsMessageService.setCurrentUserId(USER_ID);
                                 editor.apply(); // 异步保存 或者使用 editor.commit();同步保存 但会阻塞主线程
 
-                                user = gson.fromJson(responseData, User.class);
-                                USER_ID = user.getUserId();
-
-                                getToken();// HMS 推送
                                 initView();
                                 initHuanXin();
                             });
@@ -327,13 +376,15 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
     }
-    private void loginHuanXin(){
+
+    private void loginHuanXin() {
         // 登录
-        EMClient.getInstance().login(createHXId(user.getUserId()), "123123", new EMCallBack() {
+        EMClient.getInstance().login(HuanXinUtils.createHXId(user.getUserId()), "123123", new EMCallBack() {
             // 登录成功回调
             @Override
             public void onSuccess() {
                 Log.i(TAG, "环信登录成功");
+                getToken();// HMS 推送
                 // 设置用户属性
                 EMUserInfo userInfo = new EMUserInfo();
                 userInfo.setUserId(EMClient.getInstance().getCurrentUser());
@@ -355,37 +406,42 @@ public class MainActivity extends AppCompatActivity {
                         Log.i(TAG, "信息更新失败");
                     }
                 });
+                EMClient.getInstance().contactManager().asyncGetAllContactsFromServer(new EMValueCallBack<List<String>>() {
+                    @Override
+                    public void onSuccess(List<String> strings) {
+                        MessageFragment.setFriendIdList(strings);
+                    }
+
+                    @Override
+                    public void onError(int i, String s) {
+
+                    }
+                });
             }
 
             // 登录失败回调，包含错误信息
             @Override
             public void onError(int code, String error) {
-                if (code == EMError.USER_ALREADY_LOGIN){
-                    Log.i(TAG, "用户已登录");
-                }else {
+                if (code == EMError.USER_ALREADY_LOGIN) {
+                    Log.i(TAG, "用户已登录:" + HuanXinUtils.createHXId(user.getUserId()));
+                    getToken();// HMS 推送
+                    EMClient.getInstance().contactManager().asyncGetAllContactsFromServer(new EMValueCallBack<List<String>>() {
+                        @Override
+                        public void onSuccess(List<String> strings) {
+                            MessageFragment.setFriendIdList(strings);
+                            Log.i(TAG,"friendsId: " + strings.toString());
+                        }
+
+                        @Override
+                        public void onError(int i, String s) {
+
+                        }
+                    });
+                } else {
                     Log.i(TAG, "环信登录失败 code:" + code + " error:" + error);
                 }
             }
         });
-    }
-
-    /**
-     * 构建环信ID
-     * 去除其中的“-”，并每四位字符为一组进行组内逆序
-     * @param uuid 用户的 UUID
-     * @return 构建得到的 环信ID
-     */
-    private String createHXId(String uuid) {
-        // 去除字符串中的 -
-        String uuidWithoutDash = uuid.replace("-", "");
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < uuidWithoutDash.length(); i += 4) {
-            String group = uuidWithoutDash.substring(i, Math.min(i + 4, uuidWithoutDash.length()));
-            // 对每一组进行逆序
-            StringBuilder reversedGroup = new StringBuilder(group).reverse();
-            result.append(reversedGroup);
-        }
-        return result.toString();
     }
 
     @Override
