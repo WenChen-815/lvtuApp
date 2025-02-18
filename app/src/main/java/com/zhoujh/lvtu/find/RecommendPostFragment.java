@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.scwang.smart.refresh.layout.SmartRefreshLayout;
 import com.scwang.smart.refresh.layout.api.RefreshLayout;
 import com.scwang.smart.refresh.layout.listener.OnLoadMoreListener;
 import com.scwang.smart.refresh.layout.listener.OnRefreshListener;
@@ -36,7 +37,7 @@ public class RecommendPostFragment extends Fragment {
     private static final String TAG = "RecommendPostFragment";
 
     private RecyclerView recyclerView;
-    private RefreshLayout refreshLayout;
+    private SmartRefreshLayout refreshLayout;
 
     private PostListAdapter postListAdapter;
     private List<Post> postList = new ArrayList<>();

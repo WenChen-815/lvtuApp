@@ -55,25 +55,42 @@
         app:layout_constraintBottom_toTopOf="@+id/mChatInputPanel"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/head"/>
+        app:layout_constraintTop_toBottomOf="@+id/head" />
 
-    <TextView
-        android:id="@+id/ai_tv"
-        android:layout_width="250dp"
-        android:layout_height="200dp"
-        android:text="我是AI助手"
+    <com.zhoujh.lvtu.customView.AIAssistantConstrainLayout
+        android:id="@+id/ai_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginTop="100dp"
-        android:background="#EEEEEE"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/ai_tv"
+            android:layout_width="220dp"
+            android:layout_height="175dp"
+            android:padding="10dp"
+            android:background="@drawable/gradient_bg_blue2white"
+            android:text="我是AI助手" />
+
+        <ImageView
+            android:id="@+id/ai_img"
+            android:layout_width="111dp"
+            android:layout_height="111dp"
+            android:layout_marginTop="120dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </com.zhoujh.lvtu.customView.AIAssistantConstrainLayout>
+
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/mChatInputPanel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:paddingVertical="12dp"
-        android:paddingHorizontal="6dp"
         android:background="#EEEEEE"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="12dp"
 
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -105,10 +122,57 @@
             android:textColor="#FFFFFF"
 
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/open_utils"
             app:layout_constraintStart_toEndOf="@+id/chatInputEt"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/open_utils"
+            android:layout_width="50dp"
+            android:layout_height="35dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/blue_round_button"
+            android:text="+"
+            android:textColor="#FFFFFF"
+
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/send"
+            app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <View
+        android:id="@+id/cover_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#50000000"
+        android:visibility="gone" />
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:id="@+id/drawer_utils"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/background_frame_1"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:orientation="vertical"
+            app:behavior_fitToContents="false"
+            app:behavior_halfExpandedRatio="0.5"
+            app:behavior_hideable="true"
+            app:behavior_peekHeight="250dp"
+            app:layout_behavior="@string/bottom_sheet_behavior"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <include layout="@layout/drawer_chat_utils" />
+        </LinearLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

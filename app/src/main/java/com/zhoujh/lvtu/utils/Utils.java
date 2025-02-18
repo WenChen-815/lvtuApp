@@ -55,4 +55,8 @@ public class Utils {
             return null;
         }
     }
+
+    public static float ratio(int i, int height) {
+        return (float) i / (float) height;
+    }
 }

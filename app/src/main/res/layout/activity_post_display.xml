@@ -150,7 +150,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <com.zhoujh.lvtu.utils.NoScrollRecyclerView
+                <com.zhoujh.lvtu.customView.NoScrollRecyclerView
                     android:id="@+id/comment_list"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />

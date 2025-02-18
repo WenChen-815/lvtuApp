@@ -17,6 +17,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.amap.api.maps.MapsInitializer;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -59,6 +60,7 @@ import okhttp3.ResponseBody;
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "MainActivity";
     public static final String IP = "192.168.110.96:8080";
+//    public static final String IP = "10.6.22.1:8080";
     public static String USER_ID = "userId";
     public static final int PERMISSION_REQUEST_CODE = 123; // 定义一个请求码，用于识别权限请求
     public static User user;
@@ -77,7 +79,11 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
+        // 高德协议
+        // 设置隐私政策弹窗告知用户
+        MapsInitializer.updatePrivacyShow(this, true, true);
+        // 用户同意隐私政策
+        MapsInitializer.updatePrivacyAgree(this, true);
         // 权限申请
         checkPermissions();
 
@@ -101,6 +107,24 @@ public class MainActivity extends AppCompatActivity {
         } else if (savedUsername != null && savedPassword != null) {
             // 如果已保存账号和密码，直接使用这些信息进行登录
             autoLogin(savedUsername, savedPassword);
+        } else if (getIntent().hasExtra("fragment_to_load")) {
+            String fragmentTag = getIntent().getStringExtra("fragment_to_load");
+            Fragment fragment = null;
+            switch (fragmentTag) {
+                case "action_main":
+                    fragment = new MainFragment();
+                    break;
+                case "action_find":
+                    fragment = new FindFragment();
+                    break;
+                case "action_message":
+                    fragment = new MessageFragment();
+                    break;
+                case "action_my":
+                    fragment = new PersonalFragment();
+                    break;
+            }
+            loadFragment(fragment);
         } else {
             Toast.makeText(this, "请先登录！", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(this, LoginActivity.class);
@@ -409,7 +433,7 @@ public class MainActivity extends AppCompatActivity {
                 EMClient.getInstance().contactManager().asyncGetAllContactsFromServer(new EMValueCallBack<List<String>>() {
                     @Override
                     public void onSuccess(List<String> strings) {
-                        MessageFragment.setFriendIdList(strings);
+//                        MessageFragment.setFriendIdList(strings);
                     }
 
                     @Override
@@ -428,8 +452,8 @@ public class MainActivity extends AppCompatActivity {
                     EMClient.getInstance().contactManager().asyncGetAllContactsFromServer(new EMValueCallBack<List<String>>() {
                         @Override
                         public void onSuccess(List<String> strings) {
-                            MessageFragment.setFriendIdList(strings);
-                            Log.i(TAG,"friendsId: " + strings.toString());
+//                            MessageFragment.setFriendIdList(strings);
+                            Log.i(TAG, "friendsId: " + strings.toString());
                         }
 
                         @Override

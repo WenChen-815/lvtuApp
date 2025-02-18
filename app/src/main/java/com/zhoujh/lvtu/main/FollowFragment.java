@@ -2,65 +2,127 @@ package com.zhoujh.lvtu.main;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.scwang.smart.refresh.layout.api.RefreshLayout;
+import com.scwang.smart.refresh.layout.listener.OnLoadMoreListener;
+import com.scwang.smart.refresh.layout.listener.OnRefreshListener;
+import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
+import com.zhoujh.lvtu.main.adapter.PlanListAdapter;
+import com.zhoujh.lvtu.main.modle.TravelPlan;
+import com.zhoujh.lvtu.utils.modle.PageResponse;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link FollowFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
 public class FollowFragment extends Fragment {
+    private static final String TAG = "FollowFragment";
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private RecyclerView recyclerView;
+    private RefreshLayout refreshLayout;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private PlanListAdapter planListAdapter;
+    private List<TravelPlan> planList = new ArrayList<>();
+    private OkHttpClient okHttpClient = new OkHttpClient();
+    private final Gson gson = MainActivity.gson;
 
-    public FollowFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment FollowFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static FollowFragment newInstance(String param1, String param2) {
-        FollowFragment fragment = new FollowFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
-
+    private int currentPage = 1;
+    private int totalPages = 1;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_follow, container, false);
+        View view =inflater.inflate(R.layout.fragment_follow, container, false);
+        recyclerView = view.findViewById(R.id.recommend_recycle_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        planListAdapter = new PlanListAdapter(planList, getContext());
+        recyclerView.setAdapter(planListAdapter);
+        refreshLayout = view.findViewById(R.id.refreshLayout);
+        // 设置刷新监听器
+        refreshLayout.setOnRefreshListener(new OnRefreshListener() {
+            @Override
+            public void onRefresh(@NonNull RefreshLayout refreshLayout) {
+                refreshPlanData();
+            }
+        });
+        // 设置加载更多监听器
+        refreshLayout.setOnLoadMoreListener(new OnLoadMoreListener() {
+            @Override
+            public void onLoadMore(@NonNull RefreshLayout refreshLayout) {
+                loadMorePlanData();
+            }
+        });
+        loadPlanList(currentPage, 20);
+        return view;
+    }
+
+    private void refreshPlanData() {
+        currentPage = 1; // 重置页码
+        planList.clear(); // 清空原有数据
+        loadPlanList(currentPage, 10);
+    }
+
+    private void loadMorePlanData() {
+        if (currentPage < totalPages) {
+            loadPlanList(currentPage + 1, 10);
+        } else {
+            // 如果没有更多数据，结束加载更多状态
+            refreshLayout.finishLoadMoreWithNoMoreData();
+        }
+    }
+
+    private void loadPlanList(int pageNum, int pageSize) {
+        new Thread(() -> {
+            Request request = new Request.Builder()
+                    .url("http://"+ MainActivity.IP +"/lvtu/travelPlans/getFollowPlans?pageNum="+pageNum+"&pageSize="+pageSize+"&userId="+ MainActivity.USER_ID)
+                    .build();
+            try (Response response = okHttpClient.newCall(request).execute()) {
+                if (response.isSuccessful() && response.body()!=null){
+                    Type type = new TypeToken<PageResponse<TravelPlan>>() {}.getType();
+                    PageResponse<TravelPlan> pageResponse = gson.fromJson(response.body().string(), type);
+                    if (pageResponse != null) {
+                        getActivity().runOnUiThread(() -> {
+                            planList.addAll(pageResponse.getRecords());
+                            currentPage = pageResponse.getCurrent();
+                            totalPages = pageResponse.getPages();
+                            planListAdapter.notifyDataSetChanged();
+
+                            // 根据是刷新还是加载更多，完成对应状态
+                            if (pageNum == 1) {
+                                refreshLayout.finishRefresh(); // 结束下拉刷新状态
+                            } else {
+                                refreshLayout.finishLoadMore(); // 结束加载更多状态
+                            }
+                        });
+                    } else {
+                        // 数据加载失败，结束刷新和加载更多状态
+                        getActivity().runOnUiThread(() -> {
+                            refreshLayout.finishRefresh(false);
+                            refreshLayout.finishLoadMore(false);
+                        });
+                    }
+                } else {
+                    Log.e(TAG, "加载计划列表请求失败");
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
     }
 }

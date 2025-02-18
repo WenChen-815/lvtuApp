@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+<!-- 底层：蓝色圆角背景 -->
+<item>
+<!--    <shape android:shape="rectangle">-->
+<!--        <corners android:radius="16dp" />-->
+<!--        <solid android:color="#FF2196F3" />-->
+<!--    </shape>-->
+    <shape>
+        <corners android:radius="16dp" />
+        <gradient
+            android:type="radial"
+            android:gradientRadius="150%"
+            android:centerX="0.5"
+            android:centerY="0.5"
+            android:startColor="#FFFFFF"
+            android:endColor="#ee9ca7"
+            android:centerColor="#ffdde1" />
+    </shape>
+</item>
+
+<!-- 中间层：白色方形区域（通过inset缩小） -->
+<item
+    android:left="6dp"
+    android:top="6dp"
+    android:right="6dp"
+    android:bottom="6dp">
+    <shape android:shape="rectangle">
+        <corners android:radius="16dp" />
+        <solid android:color="#AAFFFFFF" />
+    </shape>
+</item>
+
+<!-- 顶层：蓝色边框（可选） -->
+<!--<item>-->
+<!--    <shape android:shape="rectangle">-->
+<!--        <corners android:radius="16dp" />-->
+<!--        <stroke-->
+<!--            android:width="2dp"-->
+<!--            android:color="#FF1976D2" />-->
+<!--    </shape>-->
+<!--</item>-->
+</layer-list>

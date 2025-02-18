@@ -85,6 +85,7 @@ public class FollowUtils {
             setFollowUI("已关注", Color.parseColor("#181A23"), R.drawable.round_button_followed_background, follow, context);
         } else if (responseData.get() == 2) {
             setFollowUI("互关", Color.parseColor("#181A23"), R.drawable.round_button_followed_background, follow, context);
+            HuanXinUtils.handleMutualFollow(MainActivity.USER_ID, creatorInfo.getUserId());
         } else if (responseData.get() == 3) {
             Log.e(TAG, "获取到拉黑用户信息！");
         }
