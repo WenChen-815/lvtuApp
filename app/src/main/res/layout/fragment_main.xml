@@ -1,37 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/white"
     tools:context=".main.MainFragment">
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:background="@color/white"
+        android:paddingStart="10dp"
+        android:paddingBottom="10dp"
         app:layout_constraintBottom_toTopOf="@+id/viewPager"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tabIndicator="@drawable/tab_indicator"
+        app:tabIndicatorColor="@color/theme_blue"
+        app:tabIndicatorFullWidth="false" />
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:background="@color/white"
         android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@+id/tabLayout"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintTop_toBottomOf="@+id/tabLayout" />
+
     <Button
         android:id="@+id/to_add_travel_plan"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="发布计划"
-        android:layout_marginBottom="60dp"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
         android:layout_marginEnd="25dp"
+        android:layout_marginBottom="60dp"
+        android:background="@drawable/round_button"
+        android:elevation="5dp"
+        android:text="+"
+        android:textColor="@color/white"
+        android:textSize="25sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

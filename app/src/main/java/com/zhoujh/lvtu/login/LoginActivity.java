@@ -55,7 +55,7 @@ public class LoginActivity extends AppCompatActivity {
             return insets;
         });
 
-        StatusBarUtils.setImmersiveStatusBar(this, getWindow().getDecorView(), StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
+        StatusBarUtils.setImmersiveStatusBar(this, null, StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
         initView();
     }
 

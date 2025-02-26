@@ -4,7 +4,7 @@
     <!-- Fill the entire shape with a white color -->
     <item>
         <shape>
-            <solid android:color="#F1F0F0" />
+            <solid android:color="#F7F7F7" />
         </shape>
     </item>
 

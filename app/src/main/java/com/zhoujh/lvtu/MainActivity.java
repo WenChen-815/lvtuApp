@@ -2,6 +2,7 @@ package com.zhoujh.lvtu;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
+import androidx.core.splashscreen.SplashScreen;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
@@ -28,9 +29,13 @@ import com.hyphenate.EMCallBack;
 import com.hyphenate.EMConnectionListener;
 import com.hyphenate.EMContactListener;
 import com.hyphenate.EMError;
+import com.hyphenate.EMGroupChangeListener;
 import com.hyphenate.EMMessageListener;
 import com.hyphenate.EMValueCallBack;
 import com.hyphenate.chat.EMClient;
+import com.hyphenate.chat.EMGroup;
+import com.hyphenate.chat.EMMessage;
+import com.hyphenate.chat.EMMucSharedFile;
 import com.hyphenate.chat.EMOptions;
 import com.hyphenate.chat.EMUserInfo;
 import com.hyphenate.exceptions.HyphenateException;
@@ -49,6 +54,7 @@ import com.zhoujh.lvtu.utils.modle.User;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -59,8 +65,11 @@ import okhttp3.ResponseBody;
 
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "MainActivity";
-    public static final String IP = "192.168.110.96:8080";
+    // 手机厂商
+    public static String MANUFACTURER;
+//    public static final String IP = "192.168.110.96:8080";
 //    public static final String IP = "10.6.22.1:8080";
+    public static final String IP = "172.29.22.139:8080";
     public static String USER_ID = "userId";
     public static final int PERMISSION_REQUEST_CODE = 123; // 定义一个请求码，用于识别权限请求
     public static User user;
@@ -72,13 +81,12 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+        // 沉浸式导航栏
+        StatusBarUtils.setImmersiveStatusBar(this, null, StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
+
         // 高德协议
         // 设置隐私政策弹窗告知用户
         MapsInitializer.updatePrivacyShow(this, true, true);
@@ -86,12 +94,12 @@ public class MainActivity extends AppCompatActivity {
         MapsInitializer.updatePrivacyAgree(this, true);
         // 权限申请
         checkPermissions();
+        // 获取手机厂商
+        MANUFACTURER = android.os.Build.MANUFACTURER;
+        Log.i(TAG, "MAKE BY MANUFACTURER: " + MANUFACTURER);
 
         // HMS 推送自动初始化
         setAutoInitEnabled(true);
-
-        // 沉浸式导航栏
-        StatusBarUtils.setImmersiveStatusBar(this, getWindow().getDecorView(), StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
 
         // 从 SharedPreferences 中读取账号和密码
         SharedPreferences sharedPreferences = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE);
@@ -107,26 +115,8 @@ public class MainActivity extends AppCompatActivity {
         } else if (savedUsername != null && savedPassword != null) {
             // 如果已保存账号和密码，直接使用这些信息进行登录
             autoLogin(savedUsername, savedPassword);
-        } else if (getIntent().hasExtra("fragment_to_load")) {
-            String fragmentTag = getIntent().getStringExtra("fragment_to_load");
-            Fragment fragment = null;
-            switch (fragmentTag) {
-                case "action_main":
-                    fragment = new MainFragment();
-                    break;
-                case "action_find":
-                    fragment = new FindFragment();
-                    break;
-                case "action_message":
-                    fragment = new MessageFragment();
-                    break;
-                case "action_my":
-                    fragment = new PersonalFragment();
-                    break;
-            }
-            loadFragment(fragment);
         } else {
-            Toast.makeText(this, "请先登录！", Toast.LENGTH_SHORT).show();
+            Utils.showToast(this, "请先登录！", Toast.LENGTH_SHORT);
             Intent intent = new Intent(this, LoginActivity.class);
             startActivity(intent);
             finish();
@@ -254,7 +244,7 @@ public class MainActivity extends AppCompatActivity {
             public void onContactInvited(String username, String reason) {
                 Log.i(TAG, "收到好友请求");
                 runOnUiThread(() -> {
-                            Toast.makeText(MainActivity.this, "收到好友请求", Toast.LENGTH_SHORT).show();
+//                            Toast.makeText(MainActivity.this, "收到好友请求", Toast.LENGTH_SHORT).show();
                         }
                 );
 //                        try {
@@ -304,6 +294,24 @@ public class MainActivity extends AppCompatActivity {
         });
         bottomNavigationView.setItemIconTintList(null); //这行代码不可缺少，不然你的导航栏的item图片会很丑，这行代码，可以让你的图片正常展示,因为默认的menu有个很丑的类似于蒙层的感觉
 //        bottomNavigationView.setItemTextColor(null); // 设置文字颜色
+        if (getIntent().hasExtra("fragment_to_load")) {
+            String fragmentTag = getIntent().getStringExtra("fragment_to_load");
+            Log.i(TAG, "fragmentTag: " + fragmentTag);
+            switch (fragmentTag) {
+                case "action_main":
+                    bottomNavigationView.setSelectedItemId(R.id.action_main);
+                    break;
+                case "action_find":
+                    bottomNavigationView.setSelectedItemId(R.id.action_find);
+                    break;
+                case "action_message":
+                    bottomNavigationView.setSelectedItemId(R.id.action_message);
+                    break;
+                case "action_my":
+                    bottomNavigationView.setSelectedItemId(R.id.action_my);
+                    break;
+            }
+        }
     }
 
     private boolean loadFragment(Fragment fragment) {
@@ -364,7 +372,7 @@ public class MainActivity extends AppCompatActivity {
                             runOnUiThread(() -> {
                                 user = gson.fromJson(responseData, User.class);
                                 USER_ID = user.getUserId();
-                                Toast.makeText(MainActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
+//                                Toast.makeText(MainActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
                                 // 保存账号和密码到SharedPreferences
                                 SharedPreferences sharedPreferences = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE);
                                 SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -438,6 +446,137 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onError(int i, String s) {
+
+                    }
+                });
+                EMClient.getInstance().groupManager().addGroupChangeListener(new EMGroupChangeListener() {
+
+                    // 当前用户收到了入群邀请。受邀用户会收到该回调。例如，用户 B 邀请用户 A 入群，则用户 A 会收到该回调。
+                    @Override
+                    public void onInvitationReceived(String groupId, String groupName, String inviter, String reason) {
+                    }
+
+                    // 群主或群管理员收到进群申请。群主和所有管理员收到该回调。
+                    public void onRequestToJoinReceived(String groupId, String groupName, String applicant, String reason){
+                    }
+
+                    // 群主或群管理员同意用户的进群申请。申请人、群主和管理员（除操作者）收到该回调。
+                    @Override
+                    public void onRequestToJoinAccepted(String groupId, String groupName, String accepter) {
+                    }
+
+                    @Override
+                    public void onRequestToJoinDeclined(String s, String s1, String s2, String s3) {
+                        // 已经弃用 但不重写会报错 用下面那个方法
+                    }
+
+                    // 群主或群管理员拒绝用户的进群申请。申请人、群主和管理员（除操作者）收到该回调。
+                    @Override
+                    public void onRequestToJoinDeclined(String groupId, String groupName, String decliner, String reason, String applicant) {
+                    }
+
+                    // 用户同意进群邀请。邀请人收到该回调。
+                    @Override
+                    public void onInvitationAccepted(String groupId, String invitee, String reason) {
+                    }
+
+                    // 用户拒绝进群邀请。邀请人收到该回调。
+                    @Override
+                    public void onInvitationDeclined(String groupId, String invitee, String reason) {
+                    }
+
+                    // 有成员被移出群组。被踢出群组的成员会收到该回调。
+                    @Override
+                    public void onUserRemoved(String groupId, String groupName) {
+                    }
+
+                    // 群组解散。群主解散群组时，所有群成员均会收到该回调。
+                    @Override
+                    public void onGroupDestroyed(String groupId, String groupName) {
+                    }
+
+                    // 有用户自动同意加入群组。邀请人收到该回调。
+                    @Override
+                    public void onAutoAcceptInvitationFromGroup(String groupId, String inviter, String inviteMessage) {
+                        Log.i(TAG, "被自动同意入群");
+                        EMMessage message = EMMessage.createTextSendMessage("我已加入群聊", groupId);
+                        message.setChatType(EMMessage.ChatType.GroupChat);
+                        EMClient.getInstance().chatManager().sendMessage(message);
+                    }
+
+                    // 有成员被加入群组禁言列表。被禁言的成员及群主和群管理员（除操作者外）会收到该回调。
+                    @Override
+                    public void onMuteListAdded(String groupId, List<String> mutes, long muteExpire) {
+                    }
+
+                    // 有成员被移出禁言列表。被解除禁言的成员及群主和群管理员（除操作者外）会收到该回调。
+                    @Override
+                    public void onMuteListRemoved(String groupId, List<String> mutes) {
+                    }
+
+                    // 有成员被加入群组白名单。被添加的成员及群主和群管理员（除操作者外）会收到该回调。
+                    @Override
+                    public void onWhiteListAdded(String groupId, List<String> whitelist) {
+                    }
+
+                    // 有成员被移出群组白名单。被移出的成员及群主和群管理员（除操作者外）会收到该回调。
+                    @Override
+                    public void onWhiteListRemoved(String groupId, List<String> whitelist) {
+                    }
+
+                    // 全员禁言状态变化。群组所有成员（除操作者外）会收到该回调。
+                    @Override
+                    public void onAllMemberMuteStateChanged(String groupId, boolean isMuted) {
+                    }
+
+                    // 设置管理员。群主、新管理员和其他管理员会收到该回调。
+                    @Override
+                    public void onAdminAdded(String groupId, String administrator) {
+                    }
+
+                    // 群组管理员被移除。被移出的成员及群主和群管理员（除操作者外）会收到该回调。
+                    @Override
+                    public void onAdminRemoved(String groupId, String administrator) {
+                    }
+
+                    // 群主转移权限。新群主会收到该回调。
+                    @Override
+                    public void onOwnerChanged(String groupId, String newOwner, String oldOwner) {
+                    }
+
+                    // 有新成员加入群组。除了新成员，其他群成员会收到该回调。
+                    @Override
+                    public void onMemberJoined(String groupId, String member) {
+                    }
+
+                    // 有成员主动退出群。除了退群的成员，其他群成员会收到该回调。
+                    @Override
+                    public void onMemberExited(String groupId, String member) {
+                    }
+
+                    // 群组公告更新。群组所有成员会收到该回调。
+                    @Override
+                    public void onAnnouncementChanged(String groupId, String announcement) {
+                    }
+
+                    // 有成员新上传群组共享文件。群组所有成员会收到该回调。
+                    @Override
+                    public void onSharedFileAdded(String groupId, EMMucSharedFile sharedFile) {
+                    }
+
+                    // 群组共享文件被删除。群组所有成员会收到该回调。
+                    @Override
+                    public void onSharedFileDeleted(String groupId, String fileId) {
+                    }
+
+                    // 群组详情变更。群组所有成员会收到该回调。
+                    @Override
+                    public void onSpecificationChanged(EMGroup group){
+                    }
+
+                    // 设置群成员自定义属性。群内其他成员会收到该回调。
+                    @Override
+                    public void onGroupMemberAttributeChanged(String groupId, String userId, Map<String, String> attribute, String from) {
 
                     }
                 });

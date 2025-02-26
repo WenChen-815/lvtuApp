@@ -22,6 +22,15 @@ public class TravelPlan {
     private Date startTime;
     private Date endTime;
     private String imageUrl;
+    private String conversationId;
+
+    public String getConversationId() {
+        return conversationId;
+    }
+
+    public void setConversationId(String conversationId) {
+        this.conversationId = conversationId;
+    }
 
     public String getTravelPlanId() {
         return travelPlanId;

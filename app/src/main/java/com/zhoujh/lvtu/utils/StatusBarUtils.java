@@ -20,19 +20,19 @@ public class StatusBarUtils {
         window.setStatusBarColor(Color.TRANSPARENT);
         window.setNavigationBarColor(Color.TRANSPARENT);
 
-//        int statusBarHeight = 0;
-//        int resourceId = activity.getResources().getIdentifier("status_bar_height", "dimen", "android");
-//        if (resourceId > 0) {
-//            statusBarHeight = activity.getResources().getDimensionPixelSize(resourceId);
-//        }
-//        if (view != null) {
-//            view.setPadding(
-//                    view.getPaddingLeft(),
-//                    statusBarHeight,
-//                    view.getPaddingRight(),
-//                    view.getPaddingBottom()
-//            );
-//        }
+        if (view != null) {
+            int statusBarHeight = 0;
+            int resourceId = activity.getResources().getIdentifier("status_bar_height", "dimen", "android");
+            if (resourceId > 0) {
+                statusBarHeight = activity.getResources().getDimensionPixelSize(resourceId);
+            }
+            view.setPadding(
+                    view.getPaddingLeft(),
+                    statusBarHeight,
+                    view.getPaddingRight(),
+                    view.getPaddingBottom()
+            );
+        }
 
         if(textColor==STATUS_BAR_TEXT_COLOR_DARK){
             activity.getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);//实现状态栏图标和文字颜色为暗色

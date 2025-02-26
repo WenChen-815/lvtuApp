@@ -55,8 +55,10 @@ public class UserSearchActivity extends AppCompatActivity {
             return insets;
         });
 
-        StatusBarUtils.setImmersiveStatusBar(this, getWindow().getDecorView(), StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
+        StatusBarUtils.setImmersiveStatusBar(this, null, StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
         initView();
+        userInfoList.clear(); // 清空原有数据
+        loadUserData("", currentPage, 15);
     }
 
     private void initView() {
@@ -64,7 +66,7 @@ public class UserSearchActivity extends AppCompatActivity {
         searchText.setOnEditorActionListener((v, actionId, event) -> {
             if(actionId == EditorInfo.IME_ACTION_SEARCH){
                 userInfoList.clear(); // 清空原有数据
-                loadUserData(v.getText().toString(), currentPage, 20);
+                loadUserData(v.getText().toString(), currentPage, 15);
                 return true;
             }
             return false;
@@ -95,12 +97,12 @@ public class UserSearchActivity extends AppCompatActivity {
     private void refreshUserData() {
         currentPage = 1; // 重置页码
         userInfoList.clear(); // 清空原有数据
-        loadUserData(searchText.getText().toString(), currentPage, 10);
+        loadUserData(searchText.getText().toString(), currentPage, 15);
     }
 
     private void loadMoreUserData() {
         if (currentPage < totalPages) {
-            loadUserData(searchText.getText().toString(), currentPage + 1, 10);
+            loadUserData(searchText.getText().toString(), currentPage + 1, 15);
         } else {
             // 如果没有更多数据，结束加载更多状态
             refreshLayout.finishLoadMoreWithNoMoreData();

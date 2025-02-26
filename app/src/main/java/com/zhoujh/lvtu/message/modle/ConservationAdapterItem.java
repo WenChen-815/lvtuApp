@@ -24,4 +24,13 @@ public class ConservationAdapterItem {
     public UserConversation getUserConversation() {
         return userConversation;
     }
+
+    @Override
+    public String toString() {
+        return "ConservationAdapterItem{" +
+                "conversationId='" + conversationId + '\'' +
+                ", emConversation=" + emConversation +
+                ", userConversation=" + userConversation +
+                '}';
+    }
 }

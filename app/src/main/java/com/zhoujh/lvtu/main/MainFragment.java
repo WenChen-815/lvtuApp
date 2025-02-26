@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -14,6 +15,7 @@ import android.view.ViewGroup;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.zhoujh.lvtu.R;
+import com.zhoujh.lvtu.utils.StatusBarUtils;
 import com.zhoujh.lvtu.utils.adapter.FragmentAdapter;
 
 import java.util.ArrayList;
@@ -24,6 +26,7 @@ public class MainFragment extends Fragment {
 
     private TabLayout tabLayout;
     private ViewPager2 viewPager;
+    private ConstraintLayout root_layout;
 
     private FragmentAdapter fragmentAdapter;
     private List<Fragment> fragments = new ArrayList<>();
@@ -37,6 +40,8 @@ public class MainFragment extends Fragment {
     }
 
     private void initView(View view) {
+//        StatusBarUtils.setImmersiveStatusBar(getActivity(), null, StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
+        root_layout = view.findViewById(R.id.root_layout);
         view.findViewById(R.id.to_add_travel_plan).setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), AddTravelPlanActivity.class);
             startActivity(intent);
@@ -57,7 +62,7 @@ public class MainFragment extends Fragment {
                     public void onConfigureTab(@NonNull TabLayout.Tab tab, int position) {
                         switch (position){
                             case 0:
-                                tab.setText("推荐");
+                                tab.setText("全部");
                                 break;
                             case 1:
                                 tab.setText("关注");
@@ -69,5 +74,30 @@ public class MainFragment extends Fragment {
                 }
         );
         mediator.attach();
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                ((View)tab.view).setScaleX(1.2f);
+                ((View)tab.view).setScaleY(1.2f);
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+                ((View)tab.view).setScaleX(1.0f);
+                ((View)tab.view).setScaleY(1.0f);
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+                ((View)tab.view).setScaleX(1.2f);
+                ((View)tab.view).setScaleY(1.2f);
+            }
+        });
+        tabLayout.selectTab(tabLayout.getTabAt(0));
+    }
+    @Override
+    public void onResume() {
+        super.onResume();
+        StatusBarUtils.setImmersiveStatusBar(getActivity(), root_layout, StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
     }
 }

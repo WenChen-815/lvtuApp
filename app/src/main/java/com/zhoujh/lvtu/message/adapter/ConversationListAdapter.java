@@ -18,6 +18,7 @@ import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.gson.Gson;
 import com.hyphenate.chat.EMConversation;
+import com.hyphenate.chat.EMGroup;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.message.ChatActivity;
@@ -50,7 +51,7 @@ public class ConversationListAdapter extends RecyclerView.Adapter<ConversationLi
         ConservationAdapterItem conservationAdapterItem = conservationAdapterItemList.get(position);
         UserConversation userConversation = conservationAdapterItem.getUserConversation();
         EMConversation emConversation = conservationAdapterItem.getEmConversation();
-        Log.i(TAG,emConversation.getType().toString());
+        Log.i(TAG,userConversation.getConversationType());
         List<UserInfo> userInfoList = userConversation.getUserInfoList();
         if (userConversation.getConversationType().equals("Chat")){
             UserInfo userInfo = userInfoList.get(0);
@@ -68,10 +69,29 @@ public class ConversationListAdapter extends RecyclerView.Adapter<ConversationLi
                 intent.putExtra("USER", userConversation.getUserId());
                 intent.putExtra("TO_USER", userInfo.getUserId());
                 intent.putExtra("userInfo", gson.toJson(userInfo));
+                intent.putExtra("userConversation", gson.toJson(userConversation));
+                intent.putExtra("type",ChatActivity.SINGLE_TYPE);
                 context.startActivity(intent);
             });
         } else if(userConversation.getConversationType().equals("GroupChat")){
-            // TODO: 群聊
+            RequestOptions requestOptions = new RequestOptions()
+                    .transform(new CircleCrop());
+            Glide.with(context)
+                    .load(R.mipmap.qun)
+                    .placeholder(R.drawable.headimg)
+                    .apply(requestOptions)
+                    .into(holder.avatar);
+            holder.username.setText(userConversation.getGroupName());
+            holder.lastMessage.setText(Utils.absContent(emConversation.getLastMessage().getBody().toString()));
+            holder.itemLayout.setOnClickListener(v -> {
+                Intent intent = new Intent(context, ChatActivity.class);
+                intent.putExtra("USER", userConversation.getUserId());
+                intent.putExtra("groupId", userConversation.getConversationId());
+                intent.putExtra("userInfoList", gson.toJson(userInfoList));
+                intent.putExtra("userConversation", gson.toJson(userConversation));
+                intent.putExtra("type",ChatActivity.GROUP_TYPE);
+                context.startActivity(intent);
+            });
         }
     }
 

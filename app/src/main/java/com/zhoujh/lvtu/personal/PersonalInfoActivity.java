@@ -77,7 +77,7 @@ public class PersonalInfoActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        StatusBarUtils.setImmersiveStatusBar(this, findViewById(R.id.root_personal_info), StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
+        StatusBarUtils.setImmersiveStatusBar(this, null, StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
 
         dateFormatter = new SimpleDateFormat("yyyy-MM-dd", Locale.PRC);
 

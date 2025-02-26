@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -27,6 +28,7 @@ import com.hyphenate.exceptions.HyphenateException;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.personal.UserInfoActivity;
+import com.zhoujh.lvtu.utils.FollowUtils;
 import com.zhoujh.lvtu.utils.HuanXinUtils;
 import com.zhoujh.lvtu.utils.modle.UserInfo;
 
@@ -93,47 +95,8 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     }
 
     private void updateFollow(UserViewHolder holder, UserInfo userInfo, int newRelationship, int position) {
-        Thread thread = new Thread(() -> {
-            RequestBody requestBody = new MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart("userId", MainActivity.USER_ID)
-                    .addFormDataPart("relatedUserId", userInfo.getUserId())
-                    .addFormDataPart("relationshipType", String.valueOf(newRelationship))
-                    .build();
-            Request request = new Request.Builder()
-                    .url("http://" + MainActivity.IP + "/lvtu/relationship/update")
-                    .post(requestBody)
-                    .build();
-            try (Response response = okHttpClient.newCall(request).execute()) {
-                if (response.isSuccessful() && response.body() != null) {
-                    int responseData = Integer.parseInt(response.body().string());
-                    handler.post(() -> {
-                        if (responseData == -1) {
-                            Log.e("UserAdapter", "update relationship error");
-                        } else {
-                            Log.i("UserAdapter", "relationship：" + responseData);
-//                            if(responseData == 2){ // 互关自动成为好友
-//                                new Thread(()->{
-//                                    // 添加好友。
-//                                    // 同步方法，会阻塞当前线程。异步方法为 asyncAddContact(String, String, EMCallBack)。
-//                                    try {
-//                                        Log.i("UserAdapter", "add contact: "+ HuanXinUtils.createHXId(userInfo.getUserId()));
-//                                        EMClient.getInstance().contactManager().addContact(HuanXinUtils.createHXId(userInfo.getUserId()), null);
-//                                    } catch (HyphenateException e) {
-//                                        Log.e("UserAdapter", "add contact error. code: "+e.getErrorCode());
-//                                        throw new RuntimeException(e);
-//                                    }
-//                                }).start();
-//                            }
-                            setFollowStateUI(holder, responseData, position);
-                        }
-                    });
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        thread.start();
+        int result = FollowUtils.updateFollow(userInfo, newRelationship, holder.followState,context);
+        userInfoList.get(position).setRelationship(result);
     }
 
     @Override
@@ -142,7 +105,8 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     }
 
     static class UserViewHolder extends RecyclerView.ViewHolder {
-        TextView userName, followState;
+        TextView userName;
+        Button followState;
         ImageView imgAvatar;
         RelativeLayout userItem;
 
@@ -193,4 +157,6 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
                 break;
         }
     }
+
+
 }

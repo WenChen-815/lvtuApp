@@ -151,9 +151,9 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="10dp"
                     android:paddingLeft="10dp"
                     android:paddingRight="10dp"
+                    android:layout_gravity="center_vertical"
                     android:text="人数"
                     android:textColor="@color/black"
                     android:textSize="15sp" />
@@ -162,7 +162,7 @@
                     android:id="@+id/current_participants"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="10dp"
+                    android:layout_gravity="center_vertical"
                     android:paddingLeft="10dp"
                     android:text="0"
                     android:textColor="@color/theme_blue"
@@ -172,20 +172,36 @@
                     android:id="@+id/max_participants"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="10dp"
+                    android:layout_gravity="center_vertical"
                     android:paddingRight="10dp"
                     android:text="/10"
                     android:textColor="@color/black"
                     android:textSize="15sp" />
+                <Button
+                    android:id="@+id/create_group"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:layout_marginEnd="20dp"
+                    android:layout_gravity="center_vertical"
+                    android:text="创建群聊"
+                    android:background="#00000000"
+                    android:textColor="#03A9F4"
+                    android:textSize="15sp"
+                    android:visibility="invisible"/>
             </LinearLayout>
 
             <HorizontalScrollView
-                android:id="@+id/participants_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingLeft="10dp"
                 android:paddingRight="10dp"
-                android:paddingBottom="10dp" />
+                android:paddingBottom="10dp" >
+                <LinearLayout
+                    android:id="@+id/participants_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
 
             <TextView
                 android:id="@+id/travel_address"

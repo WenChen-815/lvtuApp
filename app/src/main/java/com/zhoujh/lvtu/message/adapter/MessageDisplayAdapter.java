@@ -36,8 +36,6 @@ public class MessageDisplayAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private static final int VIEW_TYPE_SENT = 1;
     private static final int VIEW_TYPE_RECEIVED = 2;
 
-    UserInfo u = new UserInfo();
-
     public MessageDisplayAdapter(Context context, List<UserInfo> userInfoList) {
         this.context = context;
         this.userInfoList = userInfoList;
@@ -77,6 +75,7 @@ public class MessageDisplayAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             });
         } else if (holder instanceof ReceivedMessageViewHolder) {
             ((ReceivedMessageViewHolder) holder).bind(message);
+            UserInfo u = new UserInfo();
             for (int i = 0; i < userInfoList.size(); i++) {
                 if (HuanXinUtils.createHXId(userInfoList.get(i).getUserId()).equals(message.getFrom())) {
                     u = userInfoList.get(i);
@@ -88,9 +87,10 @@ public class MessageDisplayAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                     .placeholder(R.drawable.headimg)
                     .apply(requestOptions)
                     .into(((ReceivedMessageViewHolder) holder).avatar);
+            UserInfo finalU = u;
             ((ReceivedMessageViewHolder) holder).avatar.setOnClickListener(v -> {
                 Intent intent = new Intent(context, UserInfoActivity.class);
-                intent.putExtra("userInfo", gson.toJson(u));
+                intent.putExtra("userInfo", gson.toJson(finalU));
                 context.startActivity(intent);
             });
         }

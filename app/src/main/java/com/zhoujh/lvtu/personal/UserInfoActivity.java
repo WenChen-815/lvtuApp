@@ -227,6 +227,7 @@ public class UserInfoActivity extends AppCompatActivity {
                 intent.putExtra("USER", MainActivity.USER_ID);
                 intent.putExtra("TO_USER", userInfo.getUserId());
                 intent.putExtra("userInfo", gson.toJson(userInfo));
+                intent.putExtra("type",ChatActivity.SINGLE_TYPE);
                 startActivity(intent);
             }
         });

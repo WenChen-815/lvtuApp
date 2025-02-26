@@ -11,6 +11,7 @@ import android.util.Log;
 import com.huawei.hms.push.HmsMessageService;
 import com.huawei.hms.push.RemoteMessage;
 import com.hyphenate.chat.EMClient;
+import com.hyphenate.chat.EMOptions;
 import com.zhoujh.lvtu.main.PlanDisplayActivity;
 import com.zhoujh.lvtu.utils.NotificationUtils;
 
@@ -36,6 +37,10 @@ public class LvtuHmsMessageService extends HmsMessageService {
         super.onCreate();
         SharedPreferences sharedPreferences = getSharedPreferences("LoginPrefs", MODE_PRIVATE);
         currentUserId = sharedPreferences.getString("userId", "");
+//        EMOptions options = new EMOptions();
+//        options.setAppKey("1121250105156229#demo");
+//        options.setIncludeSendMessageInMessageListener(true);
+//        EMClient.getInstance().init(this, options);
     }
 
     public static void setCurrentUserId(String currentUserId) {
@@ -113,7 +118,7 @@ public class LvtuHmsMessageService extends HmsMessageService {
             if (Objects.equals(data.get("messageTag"), "joinPlan")) {
                 // 创建一个Intent，指定要启动的Activity
                 Intent intent = new Intent(this, PlanDisplayActivity.class);
-//        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                // intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.putExtra("travelPlanId", data.get("travelPlanId"));
                 Log.i(TAG, "intent data: " + data.get("travelPlanId"));
@@ -131,5 +136,11 @@ public class LvtuHmsMessageService extends HmsMessageService {
 
     public static void setIsSendToServer(boolean isSendToServer) {
         LvtuHmsMessageService.isSendToServer = isSendToServer;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
     }
 }

@@ -66,6 +66,10 @@ dependencies {
     implementation 'io.hyphenate:hyphenate-chat:4.11.0'
     // 通义千问 https://mvnrepository.com/artifact/com.alibaba/dashscope-sdk-java
     implementation group: 'com.alibaba', name: 'dashscope-sdk-java', version: '2.17.1'
+
+    // 豆包
+//    implementation 'com.volcengine:volcengine-java-sdk-ark-runtime:LATEST'
+    implementation 'com.volcengine:volcengine-java-sdk-ark-runtime:0.1.152'
     //高德地图
     implementation 'com.amap.api:3dmap-location-search:10.1.200_loc6.4.9_sea9.7.4'
 
@@ -88,4 +92,6 @@ dependencies {
 
     //华为推送
     implementation 'com.huawei.hms:push:6.13.0.300'
+
+    implementation 'androidx.core:core-splashscreen:1.0.1'
 }

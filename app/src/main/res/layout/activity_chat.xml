@@ -46,6 +46,14 @@
                 android:textColor="@color/black"
                 android:textSize="17sp" />
         </LinearLayout>
+        <ImageView
+            android:id="@+id/ai_enable"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:src="@mipmap/ai_running"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="18dp" />
     </RelativeLayout>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -88,16 +96,28 @@
         android:id="@+id/mChatInputPanel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="#EEEEEE"
         android:paddingHorizontal="6dp"
-        android:paddingVertical="12dp"
+        android:paddingVertical="10dp"
 
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/recyclerView">
 
+        <TextView
+            android:id="@+id/clear_history"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="清除AI上下文"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/blue_round_button"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="2dp"
+            android:layout_marginBottom="3dp"
 
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/chatInputEt" />
         <EditText
             android:id="@+id/chatInputEt"
             android:layout_width="0dp"
@@ -110,13 +130,13 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/send"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toBottomOf="@+id/clear_history" />
 
         <Button
             android:id="@+id/send"
             android:layout_width="50dp"
             android:layout_height="35dp"
-            android:layout_marginStart="10dp"
+            android:layout_marginStart="5dp"
             android:background="@drawable/blue_round_button"
             android:text="发送"
             android:textColor="#FFFFFF"
@@ -124,13 +144,13 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/open_utils"
             app:layout_constraintStart_toEndOf="@+id/chatInputEt"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toBottomOf="@+id/clear_history" />
 
         <Button
             android:id="@+id/open_utils"
             android:layout_width="50dp"
             android:layout_height="35dp"
-            android:layout_marginStart="10dp"
+            android:layout_marginStart="5dp"
             android:background="@drawable/blue_round_button"
             android:text="+"
             android:textColor="#FFFFFF"
@@ -138,7 +158,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/send"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toBottomOf="@+id/clear_history" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <View
@@ -150,7 +170,9 @@
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="29dp">
 
         <LinearLayout
             android:id="@+id/drawer_utils"

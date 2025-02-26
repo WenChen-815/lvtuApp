@@ -10,10 +10,21 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.TypeEvaluator;
 import android.animation.ValueAnimator;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
@@ -35,27 +46,29 @@ import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.message.modle.LocationMessage;
 import com.zhoujh.lvtu.utils.StatusBarUtils;
+import com.zhoujh.lvtu.utils.Utils;
 import com.zhoujh.lvtu.utils.WebSocketClient;
 import com.zhoujh.lvtu.utils.modle.UserInfo;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import okhttp3.Response;
 import okhttp3.WebSocket;
 
 public class LocationShareActivity extends AppCompatActivity {
     public static final String TAG = "LocationShareActivity";
     public final static int SINGLE_TYPE = 1;
     public final static int GROUP_TYPE = 2;
-    private final Gson gson = MainActivity.gson;
-    private List<UserInfo> userInfos;
-    private UserInfo userInfo;
+    private String GROUP_ID;
     private int type;
-    private WebSocketClient ws;
-
+    private final Gson gson = MainActivity.gson;
+    private List<UserInfo> userInfoList;
     private MyLocationStyle myLocationStyle;
     private MapView mapView;
     private AMap aMap;
@@ -64,7 +77,15 @@ public class LocationShareActivity extends AppCompatActivity {
     private static final float MIN_DISPLACEMENT = 5; // 单位：米
     private LatLng lastSentPosition;
     private Map<String, Marker> userMarkers = new ConcurrentHashMap<>();
+    private Map<String, UserInfo> userInfoMap = new ConcurrentHashMap<>();
 
+    private Handler handler = new Handler();
+    private Runnable sendLocationRunnable;
+    private BroadcastReceiver locationUpdateReceiver;
+
+    private Messenger serviceMessenger;
+    private boolean isBound;
+    private final Messenger activityMessenger = new Messenger(new IncomingHandler());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,15 +99,15 @@ public class LocationShareActivity extends AppCompatActivity {
         StatusBarUtils.setImmersiveStatusBar(this, null, StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
 
         Intent intent = getIntent();
-        type = intent.getIntExtra("type", 0);
-        Log.i(TAG, "type: " + type);
-        if (type == SINGLE_TYPE) {
-            userInfo = gson.fromJson(intent.getStringExtra("userInfo"), UserInfo.class);
-        } else if (type == GROUP_TYPE) {
+        if (intent.hasExtra("userInfoList") && intent.hasExtra("groupId")) {
             Type classType = TypeToken.getParameterized(List.class, UserInfo.class).getType();
-            userInfos = gson.fromJson(intent.getStringExtra("userInfos"), classType);
+            userInfoList = gson.fromJson(intent.getStringExtra("userInfoList"), classType);
+            userInfoList.forEach(userInfo -> userInfoMap.put(userInfo.getUserId(), userInfo));
+            GROUP_ID = intent.getStringExtra("groupId");
+            type = intent.getIntExtra("type", 0);
         } else {
             Toast.makeText(this, "类型错误", Toast.LENGTH_SHORT).show();
+            finish();
         }
 
         // 高德
@@ -97,8 +118,18 @@ public class LocationShareActivity extends AppCompatActivity {
         initViews();
         setListener();
         initMap();
-        initWs("ws://" + MainActivity.IP + "/lvtu/ws/location");
 
+        // 启动服务
+        Intent serviceIntent = new Intent(this, LocationShareService.class);
+        serviceIntent.putExtra("groupId", GROUP_ID);
+        serviceIntent.putExtra("type", type);
+        serviceIntent.putExtra("userInfoList", gson.toJson(userInfoList));
+        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+        startService(serviceIntent);
+
+        IntentFilter filter = new IntentFilter(LocationShareService.ACTION_LOCATION_UPDATE);
+        // 添加 RECEIVER_NOT_EXPORTED 标志
+        registerReceiver(locationUpdateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
     }
 
     private void initMap() {
@@ -114,36 +145,7 @@ public class LocationShareActivity extends AppCompatActivity {
         aMap.showIndoorMap(true);
 //        aMap.setTrafficEnabled(true);//显示实时路况图层，aMap是地图控制器对象。
 
-        aMap.setOnMyLocationChangeListener(location -> {
-            // 获取当前位置
-            // 获取当前位置的经纬度
-            LatLng newPosition = new LatLng(location.getLatitude(), location.getLongitude());
-            // 计算距离上次位置变化
-            if (lastSentPosition != null && AMapUtils.calculateLineDistance(lastSentPosition, newPosition) < MIN_DISPLACEMENT) {
-                return;
-            } else if (lastSentPosition == null) {
-                aMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 17));
-            }
-            lastSentPosition = newPosition;
-            LocationMessage locationMessage = new LocationMessage(MainActivity.USER_ID + "#" + userInfo.getUserId(),
-                    MainActivity.USER_ID,
-                    LocationMessage.SINGLE_TYPE,
-                    newPosition.longitude,
-                    newPosition.latitude,
-                    "");
-            String message = gson.toJson(locationMessage);
-            if (!message.isEmpty()) {
-                ws.sendMessage(message);
-            }
-        });
-
-        //* 控件是指浮在地图图面上的一系列用于操作地图的组件，例如缩放按钮、指南针、定位按钮、比例尺等。
-        //* UiSettings 类用于操控这些控件，以定制自己想要的视图效果。UiSettings 类对象的实例化需要通过 AMap 类来实现
-        mUiSettings = aMap.getUiSettings();//实例化UiSettings类对象
-
-        // 获取当前城市名称
-
-        //设置希望展示的地图缩放级别
+        // 设置希望展示的地图缩放级别
         CameraUpdate mCameraUpdate = CameraUpdateFactory.zoomTo(17);
         aMap.moveCamera(mCameraUpdate);
     }
@@ -155,64 +157,79 @@ public class LocationShareActivity extends AppCompatActivity {
     private void initViews() {
     }
 
-    private void initWs(String wsUrl) {
-        // 初始化WebSocket客户端
-        ws = new WebSocketClient();
-
-        // 连接到WebSocket服务器
-        ws.connect(wsUrl, new LocationShareListener());
-    }
-
-    private class LocationShareListener extends WebSocketClient.mWebSocketListener {
-        @Override
-        public void onMessage(@NonNull WebSocket webSocket, @NonNull String text) {
-            super.onMessage(webSocket, text);
-            runOnUiThread(() -> {
-                // 不需要clear
-                LocationMessage locationMessage = gson.fromJson(text, LocationMessage.class);
-                String userId = locationMessage.getUserId();
-                LatLng newPosition = new LatLng(
-                        locationMessage.getLatitude(),
-                        locationMessage.getLongitude()
-                );
-                if (userMarkers.containsKey(userId)) {
-                    // 更新已有Marker位置
-                    Marker marker = userMarkers.get(userId);
+    private void handleLocationMessage(String locationMessageJson) {
+        LocationMessage locationMessage = gson.fromJson(locationMessageJson, LocationMessage.class);
+        String userId = locationMessage.getUserId();
+        LatLng newPosition = new LatLng(
+                locationMessage.getLatitude(),
+                locationMessage.getLongitude()
+        );
+        if (userMarkers.containsKey(userId)) {
+            // 更新已有Marker位置
+            Marker marker = userMarkers.get(userId);
 //                    marker.setPosition(new LatLng(locationMessage.getLatitude(), locationMessage.getLongitude()));
-                    LatLng oldPosition = marker.getPosition(); // 先保存旧位置
-                    ValueAnimator animator = ValueAnimator.ofObject(
-                            new LatLngEvaluator(),
-                            oldPosition, // 使用旧位置作为起点
-                            newPosition   // 新位置作为终点
-                    );
-                    animator.setDuration(1000);
-                    animator.addUpdateListener(va -> {
-                        LatLng animatedPos = (LatLng) va.getAnimatedValue();
-                        marker.setPosition(animatedPos);
-                    });
+            LatLng oldPosition = marker.getPosition(); // 先保存旧位置
+            ValueAnimator animator = ValueAnimator.ofObject(
+                    new LatLngEvaluator(),
+                    oldPosition, // 使用旧位置作为起点
+                    newPosition   // 新位置作为终点
+            );
+            animator.setDuration(1000);
+            animator.addUpdateListener(va -> {
+                LatLng animatedPos = (LatLng) va.getAnimatedValue();
+                marker.setPosition(animatedPos);
+            });
 
-                    // 动画结束校准
-                    animator.addListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            marker.setPosition(newPosition); // 确保最终位置准确
+            // 动画结束校准
+            animator.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    marker.setPosition(newPosition); // 确保最终位置准确
+                }
+            });
+
+            animator.start();
+        } else {
+            // 创建新Marker
+            UserInfo userInfo = userInfoMap.get(locationMessage.getUserId());
+            Bitmap bitmap0 = BitmapFactory.decodeResource(getResources(), R.mipmap.location_marker);
+            // 从网络加载图片转为bitmap
+            new Thread(() -> {
+                try {
+                    Bitmap bitmap1 = null;
+                    bitmap1 = BitmapFactory.decodeStream(new URL("http://" + MainActivity.IP + userInfo.getAvatarUrl()).openStream());
+                    Bitmap finalBitmap = Bitmap.createScaledBitmap(bitmap0, 48, 48, true);
+                    if (bitmap1 != null) {
+                        if (MainActivity.MANUFACTURER.equals("Xiaomi")) {
+                            bitmap1 = Bitmap.createScaledBitmap(bitmap1, 96, 96, true);
+                        } else if (MainActivity.MANUFACTURER.equals("HUAWEI")) {
+                            bitmap1 = Bitmap.createScaledBitmap(bitmap1, 64, 64, true);
+                        } else if (MainActivity.MANUFACTURER.equals("OPPO")) {
+                            bitmap1 = Bitmap.createScaledBitmap(bitmap1, 64, 64, true);
+                        } else if (MainActivity.MANUFACTURER.equals("vivo")) {
+                            bitmap1 = Bitmap.createScaledBitmap(bitmap1, 64, 64, true);
+                        } else {
+                            bitmap1 = Bitmap.createScaledBitmap(bitmap1, 64, 64, true);
                         }
-                    });
+                        // 将bitmap1 裁剪为圆形
+                        bitmap1 = Utils.getCircularBitmap(bitmap1);
+                        finalBitmap = Utils.mergeBitmap(bitmap0, bitmap1, 0, -10);
+                    }
 
-                    animator.start();
-                } else {
-                    // 创建新Marker
                     MarkerOptions markerOption = new MarkerOptions()
                             .position(new LatLng(locationMessage.getLatitude(), locationMessage.getLongitude()))
-                            .icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.location_marker)))
+                            .icon(BitmapDescriptorFactory.fromBitmap(finalBitmap))
                             .draggable(false)
                             .setFlat(false);
                     Marker marker = aMap.addMarker(markerOption);
                     userMarkers.put(userId, marker);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            });
+            }).start();
         }
     }
+
     // 添加动画辅助类
     private static class LatLngEvaluator implements TypeEvaluator<LatLng> {
         @Override
@@ -222,10 +239,82 @@ public class LocationShareActivity extends AppCompatActivity {
             return new LatLng(lat, lng);
         }
     }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // 断开WebSocket连接
-        ws.close(1000, "断开连接");
+        if (isBound) {
+            unbindService(serviceConnection);
+            isBound = false;
+            }
+        // 销毁地图视图
+        if (mapView != null) {
+            mapView.onDestroy();
+        }
+        // 关闭服务
+        Intent serviceIntent = new Intent(this, LocationShareService.class);
+        stopService(serviceIntent);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 地图视图恢复
+        if (mapView != null) {
+            mapView.onResume();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // 地图视图暂停
+        if (mapView != null) {
+            mapView.onPause();
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        // 地图视图保存状态
+        if (mapView != null) {
+            mapView.onSaveInstanceState(outState);
+        }
+    }
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            serviceMessenger = new Messenger(service);
+            isBound = true;
+            try {
+                Message msg = Message.obtain(null, LocationShareService.MSG_REGISTER_CLIENT);
+                msg.replyTo = activityMessenger;
+                serviceMessenger.send(msg);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            serviceMessenger = null;
+            isBound = false;
+        }
+    };
+
+    private class IncomingHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case LocationShareService.MSG_LOCATION_UPDATE:
+                    String locationMessageJson = msg.getData().getString("locationMessage");
+                    Log.i("LocationShareActivity", "handleMessage: " + locationMessageJson);
+                    handleLocationMessage(locationMessageJson);
+                    break;
+                default:
+                    super.handleMessage(msg);
+            }
+        }
     }
 }

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/dou_bao_0"
+        android:title="doubao-1-5-pro-32k" />
+    <item
+        android:id="@+id/dou_bao_1"
+        android:title="doubao-1-5-lite-32k" />
+    <item
+        android:id="@+id/qw_0"
+        android:title="qwen-max" />
+    <item
+        android:id="@+id/qw_1"
+        android:title="qwen-plus" />
+    <item
+        android:id="@+id/ds_0"
+        android:title="deepSeek-r1" />
+    <item
+        android:id="@+id/ds_1"
+        android:title="deepSeek-v3" />
+</menu>

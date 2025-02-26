@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/search_user"
+        android:title="查找用户" />
+<!--    <item-->
+<!--        android:id="@+id/search_group"-->
+<!--        android:title="查找群组" />-->
+</menu>

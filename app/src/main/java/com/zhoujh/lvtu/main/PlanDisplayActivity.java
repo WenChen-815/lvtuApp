@@ -6,6 +6,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
@@ -16,6 +17,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.Insets;
@@ -27,13 +29,27 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.gson.Gson;
+import com.hyphenate.EMCallBack;
+import com.hyphenate.EMValueCallBack;
+import com.hyphenate.chat.EMClient;
+import com.hyphenate.chat.EMConversation;
+import com.hyphenate.chat.EMGroup;
+import com.hyphenate.chat.EMGroupManager;
+import com.hyphenate.chat.EMGroupOptions;
+import com.hyphenate.chat.EMMessage;
+import com.hyphenate.exceptions.HyphenateException;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.find.modle.PlanParticipant;
 import com.zhoujh.lvtu.main.modle.TravelPlan;
+import com.zhoujh.lvtu.message.ChatActivity;
+import com.zhoujh.lvtu.message.modle.UserConversation;
 import com.zhoujh.lvtu.personal.UserInfoActivity;
 import com.zhoujh.lvtu.utils.FollowUtils;
+import com.zhoujh.lvtu.utils.HuanXinUtils;
+import com.zhoujh.lvtu.utils.PushUtils;
 import com.zhoujh.lvtu.utils.Utils;
+import com.zhoujh.lvtu.utils.modle.ClientPush;
 import com.zhoujh.lvtu.utils.modle.UserInfo;
 import com.zhoujh.lvtu.utils.modle.Carousel;
 import com.zhoujh.lvtu.utils.StatusBarUtils;
@@ -46,6 +62,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -74,8 +91,9 @@ public class PlanDisplayActivity extends AppCompatActivity {
     private TextView title;
     private TextView status, time, maxParticipants, currentParticipants, budget, address, travelMode;
     private TextView userName;
-    private HorizontalScrollView scroll;
+    private LinearLayout participantsContainer;
     private RelativeLayout userItem;
+    private Button createGroup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,6 +140,38 @@ public class PlanDisplayActivity extends AppCompatActivity {
             Log.i(TAG, "空数据");
             finish();
         }
+        List<String> s = new ArrayList<>();
+//        s.add("273384448524289");
+//        s.add("273384465301510");
+//        s.add("273384476835851");
+//        s.add("273384549187589");
+//        s.add("273384555479046");
+//        s.add("273383596032009");
+//        s.add("273238934487053");
+//        s.add("273234202263563");
+//        s.add("273219023077379");
+//        s.add("273218471526407");
+//        s.add("273218270199810");
+//        s.add("273218084601859");
+//        s.add("273218069921803");
+//        s.add("273218062581764");
+//        for (String str : s) {
+//            //获取指定的会话 ID。
+//            EMConversation conversation = EMClient.getInstance().chatManager().getConversation(str);
+//
+//            // 删除指定会话。如果需要保留服务端和本地的历史消息，`isDeleteServerMessages` 传 `false`。
+//            EMClient.getInstance().chatManager().deleteConversationFromServer(conversation.conversationId(), conversation.getType(), true, new EMCallBack() {
+//                @Override
+//                public void onSuccess() {
+//                    Log.i(TAG, "删除成功" + conversation.conversationId());
+//                }
+//
+//                @Override
+//                public void onError(int code, String error) {
+//
+//                }
+//            });
+//        }
     }
 
     private void initTravelPlan() {
@@ -136,10 +186,12 @@ public class PlanDisplayActivity extends AppCompatActivity {
                 SUBMIT_TYPE = 5;
                 getParticipants();
                 submit.setText("结束");
+                createGroup.setVisibility(View.VISIBLE);
             } else {
                 getParticipants();
             }
         } else if (travelPlan.getStatus() == 2 || travelPlan.getStatus() == 3) {
+            Log.i(TAG, "status:" + travelPlan.getStatus());
             SUBMIT_TYPE = 4;
             getParticipants();
             submit.setText("已取消或结束");
@@ -157,25 +209,26 @@ public class PlanDisplayActivity extends AppCompatActivity {
                     String responseData = response.body().string();
                     if (!responseData.isEmpty()) {
                         participants.clear();
-                        scroll.removeAllViews();
-                        participants.addAll(gson.fromJson(responseData, new com.google.gson.reflect.TypeToken<List<UserInfo>>() {}.getType()));
+                        participantsContainer.removeAllViews();
+                        participants.addAll(gson.fromJson(responseData, new com.google.gson.reflect.TypeToken<List<UserInfo>>() {
+                        }.getType()));
                         boolean isParticipant = participants.stream().anyMatch(participant -> participant.getUserId().equals(MainActivity.USER_ID));
                         displayCurrentParticipants();
-                        if(SUBMIT_TYPE != 5){
+                        if (SUBMIT_TYPE != 5 && SUBMIT_TYPE != 4) {
                             if (isParticipant) {
                                 SUBMIT_TYPE = 1;
-                                runOnUiThread(()->{
+                                runOnUiThread(() -> {
                                     submit.setText("退出");
                                 });
-                            } else if (travelPlan.getCurrentParticipants() >= travelPlan.getMaxParticipants()) {
+                            } else if (travelPlan.getMaxParticipants() != 0 && travelPlan.getCurrentParticipants() >= travelPlan.getMaxParticipants()) {
                                 SUBMIT_TYPE = 3;
-                                runOnUiThread(()->{
+                                runOnUiThread(() -> {
                                     submit.setText("已满员");
                                     submit.setEnabled(false);
                                 });
                             } else {
                                 SUBMIT_TYPE = 2;
-                                runOnUiThread(()->{
+                                runOnUiThread(() -> {
                                     submit.setText("和TA一起");
                                 });
                             }
@@ -195,6 +248,11 @@ public class PlanDisplayActivity extends AppCompatActivity {
         runOnUiThread(() -> {
             for (UserInfo participant : participants) {
                 LinearLayout participantLayout = new LinearLayout(PlanDisplayActivity.this);
+                participantLayout.setOnClickListener(v -> {
+                    Intent intent = new Intent(PlanDisplayActivity.this, UserInfoActivity.class);
+                    intent.putExtra("userInfo", gson.toJson(participant));
+                    startActivity(intent);
+                });
                 participantLayout.setOrientation(LinearLayout.VERTICAL);
                 participantLayout.setLayoutParams(new LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
@@ -223,7 +281,22 @@ public class PlanDisplayActivity extends AppCompatActivity {
                 participantNameTextView.setText(participant.getUserName());
                 participantLayout.addView(avatarImageView);
                 participantLayout.addView(participantNameTextView);
-                scroll.addView(participantLayout);
+                participantsContainer.addView(participantLayout);
+
+                if (travelPlan.getStatus() == 1 && SUBMIT_TYPE == 5) {
+                    participantLayout.setOnLongClickListener(v -> {
+                        // 弹窗询问用户是否需要删除
+                        AlertDialog.Builder builder = new AlertDialog.Builder(PlanDisplayActivity.this);
+                        builder.setTitle("删除");
+                        builder.setMessage("确定删除吗？");
+                        builder.setPositiveButton("确定", (dialog, which) -> {
+                            removeParticipate(participant.getUserId());
+                        });
+                        builder.setNegativeButton("取消", null);
+                        builder.show();
+                        return true;
+                    });
+                }
             }
         });
     }
@@ -313,13 +386,13 @@ public class PlanDisplayActivity extends AppCompatActivity {
                 int newRelationship;
                 switch (creatorInfo.getRelationship()) {
                     case 0:
-                        newRelationship = FollowUtils.updateFollow(creatorInfo, 1, follow,this);
+                        newRelationship = FollowUtils.updateFollow(creatorInfo, 1, follow, this);
                         Log.i(TAG, "relationship：" + newRelationship);
                         creatorInfo.setRelationship(newRelationship);
                         break;
                     case 1:
                     case 2:
-                        newRelationship = FollowUtils.updateFollow(creatorInfo, 0,follow,this);
+                        newRelationship = FollowUtils.updateFollow(creatorInfo, 0, follow, this);
                         Log.i(TAG, "relationship：" + newRelationship);
                         creatorInfo.setRelationship(newRelationship);
                         break;
@@ -351,15 +424,162 @@ public class PlanDisplayActivity extends AppCompatActivity {
                     break;
             }
         });
+        createGroup.setOnClickListener(v -> {
+            if (travelPlan.getConversationId() == null || travelPlan.getConversationId().equals("")) {
+                if (participants.size() > 0) {
+                    EMGroupOptions option = new EMGroupOptions();
+                    option.maxUsers = 100;
+                    option.style = EMGroupManager.EMGroupStyle.EMGroupStylePublicOpenJoin;
+                    option.inviteNeedConfirm = false;
+                    List<String> membersList = new ArrayList<>();
+                    for (UserInfo u : participants) {
+                        String hxId = HuanXinUtils.createHXId(u.getUserId());
+                        membersList.add(hxId);
+                    }
+                    // 同步方法，会阻塞当前线程。EMClient.getInstance().groupManager().createGroup(groupName, desc, allMembers, reason, option);
+                    // 异步方法
+                    EMClient.getInstance().groupManager().asyncCreateGroup(travelPlan.getTitle(), "", membersList.toArray(new String[0]), "", option, new EMValueCallBack() {
+
+                        @Override
+                        public void onSuccess(Object o) {
+                            EMGroup newGroup = (EMGroup) o;
+                            runOnUiThread(() -> {
+                                Toast.makeText(PlanDisplayActivity.this, "创建群聊成功", Toast.LENGTH_SHORT).show();
+                            });
+                            EMMessage message = EMMessage.createTextSendMessage("我创建了群聊，快来交流一下吧！", newGroup.getGroupId());
+                            message.setChatType(EMMessage.ChatType.GroupChat);
+                            message.setMessageStatusCallback(new EMCallBack() {
+
+                                @Override
+                                public void onSuccess() {
+                                    // 发送消息成功 通知服务器
+                                    List<String> members = new ArrayList<>();
+                                    for (UserInfo u : participants) {
+                                        ClientPush clientPush = new ClientPush(MainActivity.USER_ID,
+                                                MainActivity.user.getUserName(),
+                                                u.getUserId(),
+                                                MainActivity.user.getUserName(),
+                                                "我创建了群聊，快来交流一下吧！",
+                                                null);
+                                        PushUtils.sendMsgPush(clientPush, null);
+                                        members.add(u.getUserId());
+                                    }
+                                    members.add(MainActivity.USER_ID);
+                                    // 新建Conversation
+                                    EMConversation conversation = EMClient.getInstance().chatManager().getConversation(newGroup.getGroupId());
+                                    Log.i(TAG, "id " + conversation.conversationId());
+                                    UserConversation userConversation = new UserConversation();
+                                    userConversation.setUserId(MainActivity.USER_ID);
+                                    userConversation.setGroupName(travelPlan.getTitle());
+                                    userConversation.setConversationId(conversation.conversationId());
+                                    userConversation.setConversationType("GroupChat");
+                                    userConversation.setMembers(members);
+                                    new Thread(() -> {
+                                        RequestBody requestBody = RequestBody.create(
+                                                gson.toJson(userConversation),
+                                                MediaType.parse("application/json; charset=utf-8")
+                                        );
+                                        Request request = new Request.Builder()
+                                                .url("http://" + MainActivity.IP + "/lvtu/conversation/createGroupChat")
+                                                .post(requestBody)
+                                                .build();
+                                        try (Response response = client.newCall(request).execute()) {
+                                            if (response.isSuccessful() && response.body() != null) {
+                                                String responseData = response.body().string();
+                                                if (!responseData.isEmpty()) {
+                                                    Log.i(TAG, "responseData: " + responseData);
+                                                    travelPlan.setConversationId(userConversation.getConversationId());
+                                                } else {
+                                                    Log.e(TAG, "返回数据为null");
+                                                }
+                                            } else {
+                                                Log.e(TAG, "请求失败 code:" + response.code());
+                                            }
+                                        } catch (IOException e) {
+                                            throw new RuntimeException(e);
+                                        }
+                                    }).start();
+                                    new Thread(() -> {
+                                        RequestBody requestBody = new MultipartBody.Builder()
+                                                .addFormDataPart("travelPlanId", travelPlan.getTravelPlanId())
+                                                .addFormDataPart("groupId", newGroup.getGroupId())
+                                                .build();
+                                        Request request = new Request.Builder()
+                                                .url("http://" + MainActivity.IP + "/lvtu/travelPlans/createPlanGroup")
+                                                .post(requestBody)
+                                                .build();
+                                        try (Response response = client.newCall(request).execute()) {
+                                            if (response.isSuccessful() && response.body() != null) {
+                                                String responseData = response.body().string();
+                                                if (!responseData.isEmpty()) {
+                                                    Log.i(TAG, "responseData: " + responseData);
+                                                } else {
+                                                    Log.e(TAG, "返回数据为null");
+                                                }
+                                            }
+                                        } catch (IOException e) {
+                                            throw new RuntimeException(e);
+                                        }
+                                    }).start();
+                                }
+
+                                @Override
+                                public void onError(int i, String s) {
+
+                                }
+                            });
+                            EMClient.getInstance().chatManager().sendMessage(message);
+//                        if(newGroup!=null){
+//                            Log.i(TAG,"GroupId:"+newGroup.getGroupId());
+//                            Intent intent = new Intent(PlanDisplayActivity.this, ChatActivity.class);
+//                            intent.putExtra("groupId",newGroup.getGroupId());
+//                            intent.putExtra("type",ChatActivity.GROUP_TYPE);
+//                            startActivity(intent);
+//                        }
+                        }
+
+                        @Override
+                        public void onError(int i, String s) {
+                            runOnUiThread(() -> {
+                                Toast.makeText(PlanDisplayActivity.this, "创建群聊失败", Toast.LENGTH_SHORT).show();
+                            });
+                            Log.i(TAG, "创建群聊失败  i:" + i + " s:" + s);
+                        }
+                    });
+                }
+            } else {
+                runOnUiThread(() -> {
+                    Toast.makeText(PlanDisplayActivity.this, "您已经创建了群聊了哦~", Toast.LENGTH_SHORT).show();
+                });
+            }
+
+        });
     }
 
     private void addParticipants() {
-        new Thread(()->{
+        new Thread(() -> {
+            // 新建Conversation
+            UserConversation userConversation = new UserConversation();
+            if (travelPlan.getConversationId() != null && !travelPlan.getConversationId().equals("")) {
+                List<String> members = new ArrayList<>();
+                for (UserInfo u : participants) {
+                    if (!u.getUserId().equals(MainActivity.USER_ID)) {
+                        members.add(u.getUserId());
+                    }
+                }
+                members.add(travelPlan.getUserId());
+                userConversation.setUserId(MainActivity.USER_ID);
+                userConversation.setGroupName(travelPlan.getTitle());
+                userConversation.setConversationId(travelPlan.getConversationId());
+                userConversation.setConversationType("GroupChat");
+                userConversation.setMembers(members);
+            }
             RequestBody requestBody = new MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("travelPlanId", travelPlan.getTravelPlanId())
                     .addFormDataPart("userId", MainActivity.USER_ID)
                     .addFormDataPart("creatorId", travelPlan.getUserId())
+                    .addFormDataPart("userConversationJson", gson.toJson(userConversation))
                     .build();
             Request request = new Request.Builder()
                     .url("http://" + MainActivity.IP + "/lvtu/travelPlans/addParticipants")
@@ -371,6 +591,20 @@ public class PlanDisplayActivity extends AppCompatActivity {
                     if (!responseData.isEmpty()) {
                         Log.i(TAG, "addParticipants: " + responseData);
                         runOnUiThread(() -> {
+                            if (travelPlan.getConversationId() != null && !travelPlan.getConversationId().equals("")) {
+                                new Thread(() -> {
+                                    try {
+                                        EMClient.getInstance().groupManager().joinGroup(travelPlan.getConversationId());
+                                        EMMessage message = EMMessage.createTextSendMessage("我已加入群聊!", travelPlan.getConversationId());
+                                        message.setChatType(EMMessage.ChatType.GroupChat);
+                                        EMClient.getInstance().chatManager().sendMessage(message);
+                                    } catch (HyphenateException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }).start();
+                            } else {
+                                Toast.makeText(PlanDisplayActivity.this, "发布者暂未创建群聊哦！", Toast.LENGTH_SHORT).show();
+                            }
                             Toast.makeText(PlanDisplayActivity.this, "加入成功", Toast.LENGTH_SHORT).show();
                             getParticipants();
                             travelPlan.setCurrentParticipants(travelPlan.getCurrentParticipants() + 1);
@@ -402,7 +636,7 @@ public class PlanDisplayActivity extends AppCompatActivity {
     }
 
     private void exitPlan() {
-        new Thread(()->{
+        new Thread(() -> {
             RequestBody requestBody = new MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("travelPlanId", travelPlan.getTravelPlanId())
@@ -417,6 +651,59 @@ public class PlanDisplayActivity extends AppCompatActivity {
                     String responseData = response.body().string();
                     if (!responseData.isEmpty()) {
                         runOnUiThread(() -> {
+                            if (travelPlan.getConversationId() != null && !travelPlan.getConversationId().equals("")) {
+                                new Thread(() -> {
+                                    try {
+                                        EMClient.getInstance().groupManager().leaveGroup(travelPlan.getConversationId());
+                                    } catch (HyphenateException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }).start();
+                            }
+                            Log.i(TAG, "exitPlan: " + responseData);
+                            Toast.makeText(PlanDisplayActivity.this, "退出成功", Toast.LENGTH_SHORT).show();
+                            getParticipants();
+                            travelPlan.setCurrentParticipants(travelPlan.getCurrentParticipants() - 1);
+                            isMax();
+                        });
+                    }
+                } else {
+                    Log.e(TAG, "退出失败");
+                    runOnUiThread(() -> {
+                        Toast.makeText(PlanDisplayActivity.this, "退出失败", Toast.LENGTH_SHORT).show();
+                    });
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
+    }
+
+    private void removeParticipate(String userId) {
+        new Thread(() -> {
+            RequestBody requestBody = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("travelPlanId", travelPlan.getTravelPlanId())
+                    .addFormDataPart("userId", userId)
+                    .build();
+            Request request = new Request.Builder()
+                    .url("http://" + MainActivity.IP + "/lvtu/travelPlans/exitPlan")
+                    .post(requestBody)
+                    .build();
+            try (Response response = client.newCall(request).execute()) {
+                if (response.isSuccessful() && response.body() != null) {
+                    String responseData = response.body().string();
+                    if (!responseData.isEmpty()) {
+                        runOnUiThread(() -> {
+                            if (travelPlan.getConversationId() != null && !travelPlan.getConversationId().equals("")) {
+                                new Thread(() -> {
+                                    try {
+                                        EMClient.getInstance().groupManager().removeUserFromGroup(travelPlan.getConversationId(), HuanXinUtils.createHXId(userId));
+                                    } catch (HyphenateException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }).start();
+                            }
                             Log.i(TAG, "exitPlan: " + responseData);
                             Toast.makeText(PlanDisplayActivity.this, "退出成功", Toast.LENGTH_SHORT).show();
                             getParticipants();
@@ -437,7 +724,7 @@ public class PlanDisplayActivity extends AppCompatActivity {
     }
 
     private void finishPlan() {
-        new Thread(()->{
+        new Thread(() -> {
             RequestBody requestBody = new MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("travelPlanId", travelPlan.getTravelPlanId())
@@ -457,7 +744,7 @@ public class PlanDisplayActivity extends AppCompatActivity {
                             submit.setTextColor(Color.parseColor("#0c0c0c"));
                             submit.setEnabled(false);
                             // 设置背景
-                            submit.setBackgroundResource(R.drawable.background_frame);
+                            submit.setBackgroundResource(R.drawable.background_frame_1);
                         });
                     }
                 }
@@ -489,8 +776,9 @@ public class PlanDisplayActivity extends AppCompatActivity {
         budget = findViewById(R.id.budget);
         travelMode = findViewById(R.id.travel_mode);
         address = findViewById(R.id.address);
-        scroll = findViewById(R.id.participants_container);
+        participantsContainer = findViewById(R.id.participants_container);
         userItem = findViewById(R.id.user_item);
+        createGroup = findViewById(R.id.create_group);
     }
 
     private void findCreatorInfo(String creatorId) {

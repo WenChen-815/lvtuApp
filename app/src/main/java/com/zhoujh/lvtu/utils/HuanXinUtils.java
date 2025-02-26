@@ -80,7 +80,7 @@ public class HuanXinUtils {
                         MainActivity.user.getUserName(),
                         "我们已经互相关注了，快来聊天吧！",
                         null);
-                sendMsgPush(clientPush, null);
+                PushUtils.sendMsgPush(clientPush, null);
 
                 // 新建Conversation
                 EMConversation conversation = EMClient.getInstance().chatManager().getConversation(createHXId(tagUserId));
@@ -133,45 +133,5 @@ public class HuanXinUtils {
         });
         // 发送消息
         EMClient.getInstance().chatManager().sendMessage(message);
-    }
-    public static boolean sendMsgPush(ClientPush clientPush, CountDownLatch latch){
-        AtomicBoolean isSuccess = new AtomicBoolean(false);
-        new Thread(() -> {
-            RequestBody requestBody = RequestBody.create(
-                    gson.toJson(clientPush),
-                    MediaType.parse("application/json; charset=utf-8")
-            );
-            Request request = new Request.Builder()
-                    .url("http://" + MainActivity.IP + "/lvtu/push/clientPush")
-                    .post(requestBody)
-                    .build();
-            try (Response response = okHttpClient.newCall(request).execute()) {
-                if (response.isSuccessful() && response.body() != null) {
-                    String responseData = response.body().string();
-                    if (!responseData.isEmpty()) {
-                        Log.i(TAG, "responseData: " + responseData);
-                        isSuccess.set(true);
-                    } else {
-                        Log.e(TAG, "返回数据为null");
-                    }
-                } else {
-                    Log.e(TAG, "请求失败 code:" + response.code());
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } finally {
-                if (latch != null) {
-                    latch.countDown();
-                }
-            }
-        }).start();
-        if (latch != null){
-            try {
-                latch.await();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        return isSuccess.get();
     }
 }

@@ -39,6 +39,8 @@ import com.google.gson.Gson;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.find.modle.Post;
+import com.zhoujh.lvtu.utils.StatusBarUtils;
+import com.zhoujh.lvtu.utils.Utils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -86,6 +88,7 @@ public class AddPostActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        StatusBarUtils.setImmersiveStatusBar(this, null, StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
         initView();
         setListener();
     }
@@ -264,6 +267,17 @@ public class AddPostActivity extends AppCompatActivity {
         upload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if(title.getText().toString().equals("") || content.getText().toString().equals("") || fileList.size() == 0){
+                    //弹出提醒框
+                    //打开ui线程
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Utils.showToast(AddPostActivity.this,"请填写完整信息",Toast.LENGTH_SHORT);
+                        }
+                    });
+                    return;
+                }
                 // 禁用按钮防止多次点击触发上传
                 upload.setEnabled(false);
                 new Thread(new Runnable() {

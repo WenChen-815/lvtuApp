@@ -1,9 +1,12 @@
 package com.zhoujh.lvtu.message;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.PopupMenu;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,6 +24,7 @@ import com.hyphenate.EMValueCallBack;
 import com.hyphenate.chat.EMClient;
 import com.hyphenate.chat.EMConversation;
 import com.hyphenate.chat.EMCursorResult;
+import com.hyphenate.chat.EMGroup;
 import com.scwang.smart.refresh.layout.SmartRefreshLayout;
 import com.scwang.smart.refresh.layout.api.RefreshLayout;
 import com.scwang.smart.refresh.layout.listener.OnLoadMoreListener;
@@ -30,6 +34,7 @@ import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.message.adapter.ConversationListAdapter;
 import com.zhoujh.lvtu.message.modle.ConservationAdapterItem;
 import com.zhoujh.lvtu.message.modle.UserConversation;
+import com.zhoujh.lvtu.utils.StatusBarUtils;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -47,9 +52,10 @@ public class MessageFragment extends Fragment {
     private List<EMConversation> emConversationList = new ArrayList<>();
     private List<ConservationAdapterItem> conservationAdapterItemList = new ArrayList<>();
 
-    private ImageView toAdd;
+    private ImageView menu;
     private RecyclerView conversationListView;
     private SmartRefreshLayout refreshLayout;
+    private ConstraintLayout root_layout;
 
     private OkHttpClient okHttpClient = new OkHttpClient();
     private final Gson gson = MainActivity.gson;
@@ -97,48 +103,39 @@ public class MessageFragment extends Fragment {
         EMClient.getInstance().chatManager().asyncFetchConversationsFromServer(limit, cursor, new EMValueCallBack<EMCursorResult<EMConversation>>() {
             @Override
             public void onSuccess(EMCursorResult<EMConversation> result) {
-                // 获取到的会话列表
-                List<EMConversation> conversations = result.getData();
-                emConversationList.addAll(conversations);
-                for (EMConversation e: emConversationList){
-                    Log.i(TAG, "会话："+e.conversationId());
-//                    if (e.conversationId().equals("b52e89c9-4675-42c9-8f87-a9f720a29d4b")){
-//                        EMClient.getInstance().chatManager().deleteConversationFromServer(e.conversationId(), e.getType(), true, new EMCallBack() {
-//                            @Override
-//                            public void onSuccess() {
-//
-//                            }
-//
-//                            @Override
-//                            public void onError(int code, String error) {
-//
-//                            }
-//                        });
-//                    }
-                }
-                for (EMConversation conversation : conversations){
+                Activity activity;
+                if (getActivity() != null){
+                    activity = getActivity();
+                    // 获取到的会话列表
+                    List<EMConversation> conversations = result.getData();
+                    emConversationList.addAll(conversations);
+                    for (EMConversation e: conversations){
+                        Log.i(TAG, "会话："+e.conversationId());
+                    }
+                    for (EMConversation conversation : conversations){
 //                    Log.i(TAG, "获取会话列表成功:" + conversation.conversationId());
-                    for (UserConversation userConversation : userConversationList){
-                        if (conversation.conversationId().equals(userConversation.getConversationId())){
-                            conservationAdapterItemList.add(new ConservationAdapterItem(
-                                    userConversation.getConversationId(),
-                                    conversation,
-                                    userConversation));
+                        for (UserConversation userConversation : userConversationList){
+                            if (conversation.conversationId().equals(userConversation.getConversationId())){
+                                conservationAdapterItemList.add(new ConservationAdapterItem(
+                                        userConversation.getConversationId(),
+                                        conversation,
+                                        userConversation));
+                            }
                         }
                     }
+                    activity.runOnUiThread(()->{
+                        conversationListAdapter.notifyDataSetChanged();
+                        // 根据是刷新还是加载更多，完成对应状态
+                        if (refreshFlag == 1) {
+                            refreshLayout.finishRefresh(); // 结束下拉刷新状态
+                        } else if(refreshFlag == 2){
+                            refreshLayout.finishLoadMore(); // 结束加载更多状态
+                        }
+                        refreshFlag = 0;
+                    });
+                    // 下一次请求的 cursor
+                    cursor = result.getCursor();
                 }
-                getActivity().runOnUiThread(()->{
-                    conversationListAdapter.notifyDataSetChanged();
-                    // 根据是刷新还是加载更多，完成对应状态
-                    if (refreshFlag == 1) {
-                        refreshLayout.finishRefresh(); // 结束下拉刷新状态
-                    } else if(refreshFlag == 2){
-                        refreshLayout.finishLoadMore(); // 结束加载更多状态
-                    }
-                    refreshFlag = 0;
-                });
-                // 下一次请求的 cursor
-                cursor = result.getCursor();
             }
 
             @Override
@@ -149,11 +146,6 @@ public class MessageFragment extends Fragment {
     }
 
     private void setListener() {
-        toAdd.setOnClickListener(v -> {
-                    Intent intent = new Intent(getActivity(), UserSearchActivity.class);
-                    startActivity(intent);
-                }
-        );
         // 设置刷新监听器
         refreshLayout.setOnRefreshListener(new OnRefreshListener() {
             @Override
@@ -179,14 +171,39 @@ public class MessageFragment extends Fragment {
                 }
             }
         });
+        menu.setOnClickListener(v -> showPopupMenu(v));
+    }
+
+    private void showPopupMenu(View view) {
+        PopupMenu popupMenu = new PopupMenu(getContext(), view);
+        popupMenu.getMenuInflater().inflate(R.menu.menu_message_fragment, popupMenu.getMenu());
+        popupMenu.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case R.id.search_user:
+                    Intent intent = new Intent(getActivity(), UserSearchActivity.class);
+                    startActivity(intent);
+                    return true;
+                default:
+                    return false;
+            }
+        });
+        popupMenu.show();
     }
 
     private void initView(View view) {
-        toAdd = view.findViewById(R.id.to_add_friend);
+//        StatusBarUtils.setImmersiveStatusBar(getActivity(), null, StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
         refreshLayout = view.findViewById(R.id.refreshLayout);
         conversationListView = view.findViewById(R.id.conversation_list);
         conversationListView.setLayoutManager(new LinearLayoutManager(getContext()));
         conversationListAdapter = new ConversationListAdapter(conservationAdapterItemList, getContext());
         conversationListView.setAdapter(conversationListAdapter);
+        root_layout = view.findViewById(R.id.root_layout);
+        menu = view.findViewById(R.id.title_menu);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        StatusBarUtils.setImmersiveStatusBar(getActivity(), root_layout, StatusBarUtils.STATUS_BAR_TEXT_COLOR_DARK);
     }
 }

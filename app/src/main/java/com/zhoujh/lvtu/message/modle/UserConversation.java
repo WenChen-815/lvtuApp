@@ -14,6 +14,15 @@ public class UserConversation {
     private String conversationType;
     private List<String> members;
     private List<UserInfo> userInfoList;
+    private String groupName;
+
+    public String getGroupName() {
+        return groupName;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
 
     public Long getId() {
         return id;

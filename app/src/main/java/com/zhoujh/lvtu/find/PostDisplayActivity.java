@@ -1,6 +1,7 @@
 package com.zhoujh.lvtu.find;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -19,7 +20,9 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -37,6 +40,7 @@ import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.find.adapter.CommentAdapter;
 import com.zhoujh.lvtu.find.modle.Comment;
 import com.zhoujh.lvtu.find.modle.Post;
+import com.zhoujh.lvtu.message.UserSearchActivity;
 import com.zhoujh.lvtu.personal.UserInfoActivity;
 import com.zhoujh.lvtu.utils.FollowUtils;
 import com.zhoujh.lvtu.utils.modle.UserInfo;
@@ -65,6 +69,7 @@ public class PostDisplayActivity extends AppCompatActivity {
 
     private Post post;
     private UserInfo creatorInfo;
+    private PostLike postLike;
     private List<Comment> commentList = new ArrayList<>();
     private List<Comment> finalCommentList = new ArrayList<>();
     private OkHttpClient client = new OkHttpClient();
@@ -77,6 +82,7 @@ public class PostDisplayActivity extends AppCompatActivity {
     private ImageView star_btn;
     private ImageView like_btn;
     private ImageView back_btn;
+    private ImageView delete;
     private ImageView cancelReplyBtn;
     private ImageView avatar;
     private Button submit;
@@ -85,6 +91,7 @@ public class PostDisplayActivity extends AppCompatActivity {
     private ViewPager2 postImage;
     private TextView content;
     private TextView title;
+    private TextView comment_title;
     private TextView userName;
     private NoScrollRecyclerView commentListView;
     private EditText chatInputEt;
@@ -94,7 +101,6 @@ public class PostDisplayActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_post_display);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root_layout), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -112,6 +118,7 @@ public class PostDisplayActivity extends AppCompatActivity {
             if (postJson != null) {
                 post = gson.fromJson(getIntent().getStringExtra("post"), Post.class);
                 findCreatorInfo(post.getUserId());
+                checkIsLike(post.getPostId(), MainActivity.USER_ID);
             } else if (postId != null) {
                 // TODO 通过ID查找帖子
             }
@@ -119,6 +126,30 @@ public class PostDisplayActivity extends AppCompatActivity {
         initView();
         setListener();
         setData(post);
+    }
+
+    private void checkIsLike(String postId, String userId) {
+        new Thread(() -> {
+            Request request = new Request.Builder()
+                    .url("http://" + MainActivity.IP + "/lvtu/post/isLikePost?userId=" + userId + "&postId=" + postId)
+                    .build();
+            try (Response response = client.newCall(request).execute()) {
+                if (response.isSuccessful()) {
+                    String responseData = response.body().string();
+                    if (!responseData.isEmpty()) {
+                        runOnUiThread(() -> {
+                            like_btn.setImageResource(R.mipmap.like);
+                            postLike = gson.fromJson(responseData, PostLike.class);
+                            postLike.isLiked = true;
+                        });
+                    } else {
+                        like_btn.setImageResource(R.mipmap.like1);
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
     }
 
     private void findCreatorInfo(String creatorId) {
@@ -173,7 +204,7 @@ public class PostDisplayActivity extends AppCompatActivity {
         //Carousel为自定义轮播图工具类
         Carousel carousel = new Carousel(PostDisplayActivity.this, dotLinerLayout, postImage);
         carousel.initViews(post.getPicturePath());
-
+        comment_title.setText("  共 " + post.getCommentCount() + " 条评论");
         loadComment(post.getPostId());
     }
 
@@ -207,9 +238,13 @@ public class PostDisplayActivity extends AppCompatActivity {
     }
 
     private void initView() {
+        delete = findViewById(R.id.delete);
+        if (post.getUserId().equals(MainActivity.USER_ID)) {
+            delete.setVisibility(View.VISIBLE);
+        }
+        comment_title = findViewById(R.id.comment_title);
         follow = findViewById(R.id.follow);
-//        like_btn = findViewById(R.id.btn_like);
-//        menuBtn = findViewById(R.id.popupmenu);
+        like_btn = findViewById(R.id.btn_like);
         postImage = findViewById(R.id.post_image);
         dotLinerLayout = findViewById(R.id.index_dot);
         content = findViewById(R.id.post_content);
@@ -230,83 +265,89 @@ public class PostDisplayActivity extends AppCompatActivity {
     }
 
     public void setListener() {
+        delete.setOnClickListener(v -> {
+            new AlertDialog.Builder(this)
+                    .setTitle("删除帖子")
+                    .setMessage("确定要删除帖子吗？")
+                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            new Thread(() -> {
+                                Request request = new Request.Builder()
+                                        .url("http://" + MainActivity.IP + "/lvtu/post/delete?postId=" + post.getPostId())
+                                        .build();
+                                try (Response response = client.newCall(request).execute()) {
+                                    if (response.isSuccessful()) {
+                                        String responseData = response.body().string();
+                                        if (!responseData.isEmpty()) {
+                                            Log.i(TAG, "删除帖子成功: " + responseData);
+                                            runOnUiThread(() -> {
+                                                finish();
+                                            });
+                                        }
+                                    }
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }).start();
+                        }
+                    })
+                    .setNegativeButton("取消", null)
+                    .show();
+        });
         userItem.setOnClickListener(v -> {
             Intent intent = new Intent(this, UserInfoActivity.class);
             intent.putExtra("userInfo", gson.toJson(creatorInfo));
             startActivity(intent);
         });
-//        menuBtn.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                showPopupMenu(view);
-//            }
-//        });
-//        like_btn.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                // 执行收藏代码
-//                if (status==""){
-//                    showLoginDialog();
-//                }else if (likeStatus==0){
-//                    addExp("完成5次点赞");
-//                    new Thread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            String postId = postWithUserInfo.getPost().getPostId();
-//                            client = new OkHttpClient();
-//                            MultipartBody.Builder builder = new MultipartBody.Builder()
-//                                    .setType(MultipartBody.FORM)
-//                                    .addFormDataPart("postId",postId)
-//                                    .addFormDataPart("userId",userId);
-//                            RequestBody requestBody = builder.build();
-//                            Request request = new Request.Builder()
-//                                    .url(url+"posts/like")
-//                                    .post(requestBody)
-//                                    .build();
-//                            try {
-//                                Response response = client.newCall(request).execute();
-//                            } catch (IOException e) {
-//                                e.printStackTrace();
-//                            }
-//                        }
-//                    }).start();
-//                    likeStatus=1;
-//                    YoYo.with(Techniques.RubberBand)
-//                            .duration(700)
-//                            .playOn(like_btn);
-//                    like_btn.setImageResource(R.mipmap.like);
-//                } else if (likeStatus==1) {
-//                    //取消点赞
-//                    new Thread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            String postId = postWithUserInfo.getPost().getPostId();
-//                            client = new OkHttpClient();
-//                            MultipartBody.Builder builder = new MultipartBody.Builder()
-//                                    .setType(MultipartBody.FORM)
-//                                    .addFormDataPart("postId",postId)
-//                                    .addFormDataPart("userId",userId);
-//                            RequestBody requestBody = builder.build();
-//                            Request request = new Request.Builder()
-//                                    .url(url+"posts/like")
-//                                    .post(requestBody)
-//                                    .build();
-//                            try {
-//                                Response response = client.newCall(request).execute();
-//
-//                            } catch (IOException e) {
-//                                e.printStackTrace();
-//                            }
-//                        }
-//                    }).start();
-//                    likeStatus=0;
-//                    YoYo.with(Techniques.RubberBand)
-//                            .duration(700)
-//                            .playOn(like_btn);
-//                    like_btn.setImageResource(R.mipmap.like1);
-//                }
-//            }
-//        });
+        like_btn.setOnClickListener(v -> {
+            if (postLike == null || !postLike.isLiked){
+                new Thread(() -> {
+                    Request request = new Request.Builder()
+                            .url("http://" + MainActivity.IP + "/lvtu/post/likePost?postId=" + post.getPostId()+"&userId="+MainActivity.USER_ID)
+                            .build();
+                    try (Response response = client.newCall(request).execute()) {
+                        if (response.isSuccessful()) {
+                            String responseData = response.body().string();
+                            if (!responseData.isEmpty()) {
+                                postLike = gson.fromJson(responseData, PostLike.class);
+                                postLike.isLiked = true;
+                                runOnUiThread(() -> {
+                                    like_btn.setImageResource(R.mipmap.like);
+                                });
+                                Log.i(TAG, "点赞成功: " + responseData);
+                            } else {
+                                Log.i(TAG, "点赞失败: " + responseData);
+                            }
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }).start();
+            } else {
+                new Thread(() -> {
+                    Request request = new Request.Builder()
+                            .url("http://" + MainActivity.IP + "/lvtu/post/unlikePost?postId=" + post.getPostId()+"&userId="+MainActivity.USER_ID)
+                            .build();
+                    try (Response response = client.newCall(request).execute()) {
+                        if (response.isSuccessful()) {
+                            String responseData = response.body().string();
+                            if (!responseData.isEmpty()) {
+                                postLike.isLiked = false;
+                                runOnUiThread(() -> {
+                                    like_btn.setImageResource(R.mipmap.like1);
+                                });
+                                Log.i(TAG, "取消点赞: " + responseData);
+                            } else {
+                                Log.i(TAG, "取消点赞失败: " + responseData);
+                            }
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }).start();
+            }
+        });
 //        star_btn.setOnClickListener(new View.OnClickListener() {
 //            @Override
 //            public void onClick(View view) {
@@ -428,7 +469,6 @@ public class PostDisplayActivity extends AppCompatActivity {
                             MainActivity.user.getUserName(),
                             replyComment.getUserName()
                     );
-                    Toast.makeText(PostDisplayActivity.this, LocalDateTime.now().toString(), Toast.LENGTH_SHORT).show();
                 } else {
                     comment = new Comment(post.getPostId(),
                             MainActivity.user.getUserId(),
@@ -454,6 +494,8 @@ public class PostDisplayActivity extends AppCompatActivity {
                                 Log.i(TAG, "评论成功: " + responseData);
                                 Comment newComment = gson.fromJson(responseData, Comment.class);
                                 runOnUiThread(() -> {
+                                    post.setCommentCount(post.getCommentCount() + 1);
+                                    comment_title.setText("  共 " + post.getCommentCount() + " 条评论");
                                     Toast.makeText(PostDisplayActivity.this, "评论成功", Toast.LENGTH_SHORT).show();
                                     commentList.add(newComment);
                                     finalCommentList.clear();
@@ -490,13 +532,13 @@ public class PostDisplayActivity extends AppCompatActivity {
                 int newRelationship;
                 switch (creatorInfo.getRelationship()) {
                     case 0:
-                        newRelationship = FollowUtils.updateFollow(creatorInfo, 1, follow,this);
+                        newRelationship = FollowUtils.updateFollow(creatorInfo, 1, follow, this);
                         Log.i(TAG, "relationship：" + newRelationship);
                         creatorInfo.setRelationship(newRelationship);
                         break;
                     case 1:
                     case 2:
-                        newRelationship = FollowUtils.updateFollow(creatorInfo, 0, follow,this);
+                        newRelationship = FollowUtils.updateFollow(creatorInfo, 0, follow, this);
                         Log.i(TAG, "relationship：" + newRelationship);
                         creatorInfo.setRelationship(newRelationship);
                         break;
@@ -597,6 +639,22 @@ public class PostDisplayActivity extends AppCompatActivity {
                 finalCommentList.add(childComment);
                 addChildComments(childComment, childCommentsMap);
             }
+        }
+    }
+
+    private static class PostLike {
+        public Long id;
+        public String postId;
+        public String userId;
+        public boolean isLiked;
+
+        public PostLike() {
+        }
+
+        public PostLike(Long id, String postId, String userId) {
+            this.id = id;
+            this.postId = postId;
+            this.userId = userId;
         }
     }
 }
