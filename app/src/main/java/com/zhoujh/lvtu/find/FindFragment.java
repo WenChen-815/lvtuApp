@@ -11,10 +11,12 @@ import androidx.viewpager2.widget.ViewPager2;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.zhoujh.lvtu.R;
+import com.zhoujh.lvtu.main.PlanSearchActivity;
 import com.zhoujh.lvtu.utils.StatusBarUtils;
 import com.zhoujh.lvtu.utils.adapter.FragmentAdapter;
 
@@ -27,6 +29,7 @@ public class FindFragment extends Fragment {
     private TabLayout tabLayout;
     private ViewPager2 viewPager;
     private ConstraintLayout root_layout;
+    private ImageView search;
 
     private FragmentAdapter fragmentAdapter;
     private List<Fragment> fragments = new ArrayList<>();
@@ -95,6 +98,12 @@ public class FindFragment extends Fragment {
             }
         });
         tabLayout.selectTab(tabLayout.getTabAt(0));
+
+        search = view.findViewById(R.id.search_button);
+        search.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), PostSearchActivity.class);
+            startActivity(intent);
+        });
     }
     @Override
     public void onResume() {

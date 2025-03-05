@@ -1,6 +1,9 @@
 package com.zhoujh.lvtu.utils;
 
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
@@ -9,6 +12,9 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.net.Uri;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +25,10 @@ import androidx.core.content.res.ResourcesCompat;
 
 import com.zhoujh.lvtu.R;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.regex.Matcher;
@@ -145,5 +155,48 @@ public class Utils {
         view.setBackground(ResourcesCompat.getDrawable(context.getResources(), R.drawable.toast_background, null));
         toast.setView(view);
         toast.show();
+    }
+
+    //通过uri获取文件
+    public static File getFileFromUri(Uri uri, Context context) {
+        try {
+            ContentResolver contentResolver = context.getContentResolver();
+            String displayName = null;
+            String[] projection = {MediaStore.Images.Media.DISPLAY_NAME};
+            Cursor cursor = contentResolver.query(uri, projection, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                int index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME);
+                displayName = cursor.getString(index);
+            }
+            cursor.close();
+            if (displayName != null) {
+                InputStream inputStream = contentResolver.openInputStream(uri);
+                if (inputStream != null) {
+                    File file = new File(context.getCacheDir(), displayName);
+                    FileOutputStream outputStream = new FileOutputStream(file);
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                    }
+                    outputStream.close();
+                    inputStream.close();
+                    return file;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static int dip2px(Context context, float dpValue) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
+    }
+
+    public static int px2dip(Context context, float pxValue) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (pxValue / scale + 0.5f);
     }
 }

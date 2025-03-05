@@ -85,7 +85,7 @@
                     android:layout_marginStart="45dp"
                     android:layout_toEndOf="@+id/tv1_1"
                     android:background="@null"
-                    android:text="我的计划"
+                    android:hint="请输入计划标题"
                     android:textColorHighlight="#99CCFF"
                     android:textCursorDrawable="@drawable/cursor_style"
                     android:textSize="16sp" />
@@ -120,7 +120,7 @@
                     android:lines="7"
                     android:maxLines="13"
                     android:padding="3dp"
-                    android:text="我的计划内容"
+                    android:hint="请输入计划内容"
                     android:textColorHighlight="#99CCFF"
                     android:textCursorDrawable="@drawable/cursor_style"
                     android:textSize="15sp" />

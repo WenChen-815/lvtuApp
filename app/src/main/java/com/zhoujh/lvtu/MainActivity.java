@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
     public static String MANUFACTURER;
 //    public static final String IP = "192.168.110.96:8080";
 //    public static final String IP = "10.6.22.1:8080";
-    public static final String IP = "172.29.22.139:8080";
+    public static final String IP = "192.168.88.159:8080";
     public static String USER_ID = "userId";
     public static final int PERMISSION_REQUEST_CODE = 123; // 定义一个请求码，用于识别权限请求
     public static User user;

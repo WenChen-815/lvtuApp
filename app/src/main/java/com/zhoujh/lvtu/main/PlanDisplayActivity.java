@@ -739,20 +739,38 @@ public class PlanDisplayActivity extends AppCompatActivity {
                     if (!responseData.isEmpty()) {
                         Log.i(TAG, "finishPlan: " + responseData);
                         runOnUiThread(() -> {
-                            Toast.makeText(PlanDisplayActivity.this, "行程结束", Toast.LENGTH_SHORT).show();
-                            submit.setText("行程已结束");
-                            submit.setTextColor(Color.parseColor("#0c0c0c"));
-                            submit.setEnabled(false);
-                            // 设置背景
-                            submit.setBackgroundResource(R.drawable.background_frame_1);
-                        });
-                    }
+                                    Toast.makeText(PlanDisplayActivity.this, "行程结束", Toast.LENGTH_SHORT).show();
+                                    submit.setText("行程已结束");
+                                    submit.setTextColor(Color.parseColor("#0c0c0c"));
+                                    submit.setEnabled(false);
+
+                                    // 如果创建过群聊 则解散群聊
+                                    if (travelPlan.getConversationId() != null && !travelPlan.getConversationId().equals("")) {
+                                        EMClient.getInstance().groupManager().asyncDestroyGroup(travelPlan.getConversationId(), new EMCallBack() {
+                                            @Override
+                                            public void onSuccess() {
+                                                Log.i(TAG, "finishPlan: 解散群聊成功");
+                                            }
+
+                                            @Override
+                                            public void onError(int i, String s) {
+
+                                            }
+                                        });
+                                    }
+                                // 设置背景
+                                submit.setBackgroundResource(R.drawable.background_frame_1);
+                    });
                 }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
-        }).start();
-    }
+        } catch(IOException e){
+            throw new RuntimeException(e);
+        }
+    }).
+
+    start();
+
+}
 
     private void initView() {
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());

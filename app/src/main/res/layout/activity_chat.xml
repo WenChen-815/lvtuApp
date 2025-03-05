@@ -46,24 +46,42 @@
                 android:textColor="@color/black"
                 android:textSize="17sp" />
         </LinearLayout>
+
         <ImageView
             android:id="@+id/ai_enable"
             android:layout_width="35dp"
             android:layout_height="35dp"
-            android:src="@mipmap/ai_running"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:layout_marginEnd="18dp" />
+            android:layout_marginEnd="18dp"
+            android:src="@mipmap/ai_running" />
     </RelativeLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
-        android:layout_width="match_parent"
+    <com.scwang.smart.refresh.layout.SmartRefreshLayout
+        android:id="@+id/refreshLayout"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@+id/mChatInputPanel"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/head" />
+        app:layout_constraintTop_toBottomOf="@+id/head">
+
+        <!-- 下拉刷新头部 -->
+        <com.scwang.smart.refresh.header.ClassicsHeader
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:srlEnableLastTime="false"
+            app:srlTextPulling="下拉查看更多历史消息"
+            app:srlTextRefreshing="正在加载..."
+            app:srlTextFinish="加载完成"
+            />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </com.scwang.smart.refresh.layout.SmartRefreshLayout>
+
 
     <com.zhoujh.lvtu.customView.AIAssistantConstrainLayout
         android:id="@+id/ai_layout"
@@ -77,8 +95,8 @@
             android:id="@+id/ai_tv"
             android:layout_width="220dp"
             android:layout_height="175dp"
-            android:padding="10dp"
             android:background="@drawable/gradient_bg_blue2white"
+            android:padding="10dp"
             android:text="我是AI助手" />
 
         <ImageView
@@ -102,22 +120,23 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/recyclerView">
+        app:layout_constraintTop_toBottomOf="@+id/refreshLayout">
 
         <TextView
             android:id="@+id/clear_history"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="清除AI上下文"
-            android:textColor="#FFFFFF"
+            android:layout_marginBottom="3dp"
             android:background="@drawable/blue_round_button"
             android:paddingHorizontal="6dp"
             android:paddingVertical="2dp"
-            android:layout_marginBottom="3dp"
+            android:text="清除AI上下文"
+            android:textColor="#FFFFFF"
 
+            app:layout_constraintBottom_toTopOf="@+id/chatInputEt"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@+id/chatInputEt" />
+            app:layout_constraintTop_toTopOf="parent" />
+
         <EditText
             android:id="@+id/chatInputEt"
             android:layout_width="0dp"
@@ -194,7 +213,26 @@
 
             <include layout="@layout/drawer_chat_utils" />
         </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/addable_user_ly"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/background_frame_1"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:orientation="vertical"
+            app:behavior_fitToContents="false"
+            app:behavior_halfExpandedRatio="0.5"
+            app:behavior_hideable="true"
+            app:behavior_peekHeight="500dp"
+            app:layout_behavior="@string/bottom_sheet_behavior"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <include layout="@layout/drawer_add_group_member" />
+        </LinearLayout>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
-
-
 </androidx.constraintlayout.widget.ConstraintLayout>

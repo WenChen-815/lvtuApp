@@ -217,8 +217,9 @@ public class PersonalFragment extends Fragment {
         int statusBarHeight = getStatusBarHeight();
         // 动态设置 Toolbar 的高度
         ViewGroup.LayoutParams params = toolbar.getLayoutParams();
-        params.height = statusBarHeight + params.height;
+        params.height = statusBarHeight + avatar.getLayoutParams().height;
         toolbar.setLayoutParams(params);
+        Log.i("PersonalFragment", "statusBarHeight:" + toolbar.getLayoutParams().height);
 //        toolbar.setPadding(
 //                toolbar.getPaddingLeft(),
 //                toolbar.getTitleMarginTop()+statusBarHeight,

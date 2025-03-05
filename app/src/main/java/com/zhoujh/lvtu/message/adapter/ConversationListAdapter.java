@@ -19,6 +19,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.google.gson.Gson;
 import com.hyphenate.chat.EMConversation;
 import com.hyphenate.chat.EMGroup;
+import com.hyphenate.chat.EMMessage;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.message.ChatActivity;
@@ -51,7 +52,7 @@ public class ConversationListAdapter extends RecyclerView.Adapter<ConversationLi
         ConservationAdapterItem conservationAdapterItem = conservationAdapterItemList.get(position);
         UserConversation userConversation = conservationAdapterItem.getUserConversation();
         EMConversation emConversation = conservationAdapterItem.getEmConversation();
-        Log.i(TAG,userConversation.getConversationType());
+//        Log.i(TAG,userConversation.getConversationType());
         List<UserInfo> userInfoList = userConversation.getUserInfoList();
         if (userConversation.getConversationType().equals("Chat")){
             UserInfo userInfo = userInfoList.get(0);
@@ -63,7 +64,14 @@ public class ConversationListAdapter extends RecyclerView.Adapter<ConversationLi
                     .apply(requestOptions)
                     .into(holder.avatar);
             holder.username.setText(userInfo.getUserName());
-            holder.lastMessage.setText(Utils.absContent(emConversation.getLastMessage().getBody().toString()));
+            String lastMessage = "";
+            if (emConversation.getLastMessage().getType() == EMMessage.Type.TXT){
+                lastMessage = Utils.absContent(emConversation.getLastMessage().getBody().toString());
+            }
+            else if (emConversation.getLastMessage().getType() == EMMessage.Type.IMAGE){
+                lastMessage = "[图片]";
+            }
+            holder.lastMessage.setText(lastMessage);
             holder.itemLayout.setOnClickListener(v -> {
                 Intent intent = new Intent(context, ChatActivity.class);
                 intent.putExtra("USER", userConversation.getUserId());
@@ -82,7 +90,14 @@ public class ConversationListAdapter extends RecyclerView.Adapter<ConversationLi
                     .apply(requestOptions)
                     .into(holder.avatar);
             holder.username.setText(userConversation.getGroupName());
-            holder.lastMessage.setText(Utils.absContent(emConversation.getLastMessage().getBody().toString()));
+            String lastMessage = "";
+            if (emConversation.getLastMessage().getType() == EMMessage.Type.TXT){
+                lastMessage = Utils.absContent(emConversation.getLastMessage().getBody().toString());
+            }
+            else if (emConversation.getLastMessage().getType() == EMMessage.Type.IMAGE){
+                lastMessage = "[图片]";
+            }
+            holder.lastMessage.setText(lastMessage);
             holder.itemLayout.setOnClickListener(v -> {
                 Intent intent = new Intent(context, ChatActivity.class);
                 intent.putExtra("USER", userConversation.getUserId());

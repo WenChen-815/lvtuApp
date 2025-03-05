@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:background="@color/white"
     android:paddingHorizontal="16dp"
-    android:paddingTop="12dp">
+    android:paddingTop="8dp">
     <!-- 头像和用户名 -->
     <LinearLayout
         android:id="@+id/ll1"
@@ -86,7 +86,7 @@
         android:orientation="horizontal"
         app:layout_constraintEnd_toStartOf="@id/image_container"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ll2">
+        app:layout_constraintBottom_toBottomOf="@+id/image_container">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -114,8 +114,8 @@
     <!-- 图片 -->
     <LinearLayout
         android:id="@+id/image_container"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="111dp"
+        android:layout_height="111dp"
         android:gravity="start"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
@@ -124,12 +124,13 @@
         app:layout_constraintBottom_toBottomOf="parent">
     </LinearLayout>
     <View
+        android:id="@+id/diver"
         android:layout_width="0dp"
         android:layout_height="1dp"
         android:background="@drawable/background_frame"
-        android:layout_marginBottom="6dp"
-        android:layout_marginTop="24dp"
-        app:layout_constraintTop_toBottomOf="@+id/ll3"
+        android:layout_marginBottom="4dp"
+        android:layout_marginTop="10dp"
+        app:layout_constraintTop_toBottomOf="@+id/image_container"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>

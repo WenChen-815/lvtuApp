@@ -76,7 +76,7 @@
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="30dp"
                 app:contentInsetStart="0dp"
                 app:layout_collapseMode="pin">
 

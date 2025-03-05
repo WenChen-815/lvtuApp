@@ -58,9 +58,18 @@
         android:theme="@style/Theme.Lvtu"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        <activity
+            android:name=".main.PlanSearchActivity"
+            android:exported="false" />
+        <activity
+            android:name=".find.PostSearchActivity"
+            android:exported="false" />
+
         <service android:name="com.amap.api.location.APSService" />
-        <service android:name=".message.LocationShareService"
+        <service
+            android:name=".message.LocationShareService"
             android:foregroundServiceType="location" />
+
         <activity
             android:name=".message.LocationShareActivity"
             android:exported="false" />
@@ -122,6 +131,7 @@
             android:theme="@style/Theme.App.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

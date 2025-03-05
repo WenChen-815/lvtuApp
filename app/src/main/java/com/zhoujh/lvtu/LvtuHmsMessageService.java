@@ -130,6 +130,8 @@ public class LvtuHmsMessageService extends HmsMessageService {
                 NotificationUtils.showNotification(this, data.get("title"), data.get("body"), null);
             } else if (Objects.equals(data.get("messageTag"), "IM")) {
                 NotificationUtils.showNotification(this, data.get("title"), data.get("body"), null);
+            } else if (Objects.equals(data.get("messageTag"), "joinGroup")) {
+                NotificationUtils.showNotification(this, data.get("title"), data.get("body"), null);
             }
         }
     }

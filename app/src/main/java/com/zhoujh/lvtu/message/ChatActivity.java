@@ -1,5 +1,7 @@
 package com.zhoujh.lvtu.message;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
@@ -10,9 +12,13 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -41,9 +47,16 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.hyphenate.EMCallBack;
 import com.hyphenate.EMMessageListener;
+import com.hyphenate.EMValueCallBack;
 import com.hyphenate.chat.EMClient;
 import com.hyphenate.chat.EMConversation;
+import com.hyphenate.chat.EMGroup;
+import com.hyphenate.chat.EMImageMessageBody;
 import com.hyphenate.chat.EMMessage;
+import com.scwang.smart.refresh.layout.SmartRefreshLayout;
+import com.scwang.smart.refresh.layout.api.RefreshLayout;
+import com.scwang.smart.refresh.layout.listener.OnLoadMoreListener;
+import com.scwang.smart.refresh.layout.listener.OnRefreshListener;
 import com.volcengine.ark.runtime.model.completion.chat.ChatCompletionRequest;
 import com.volcengine.ark.runtime.model.completion.chat.ChatMessage;
 import com.volcengine.ark.runtime.model.completion.chat.ChatMessageRole;
@@ -51,6 +64,7 @@ import com.volcengine.ark.runtime.service.ArkService;
 import com.zhoujh.lvtu.MainActivity;
 import com.zhoujh.lvtu.R;
 import com.zhoujh.lvtu.customView.AIAssistantConstrainLayout;
+import com.zhoujh.lvtu.message.adapter.InviteUserAdapter;
 import com.zhoujh.lvtu.message.adapter.MessageDisplayAdapter;
 import com.zhoujh.lvtu.message.modle.UserConversation;
 import com.zhoujh.lvtu.personal.UserInfoActivity;
@@ -63,6 +77,7 @@ import com.zhoujh.lvtu.utils.modle.UserInfo;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -88,6 +103,7 @@ public class ChatActivity extends AppCompatActivity {
     private UserInfo userInfo;
     private UserConversation userConversation;
     private List<UserInfo> userInfoList = new ArrayList<>();
+    private String starMsgId;
 
     private Button send;
     private ConstraintLayout rootLayout;
@@ -100,20 +116,23 @@ public class ChatActivity extends AppCompatActivity {
     private MessageDisplayAdapter chatAdapter;
     private EMMessageListener msgListener;
     private EMConversation conversation;
+    private EMGroup currentEmGroup;
     private TextView clearAi;
+    private SmartRefreshLayout refreshLayout;
 
     // 抽屉工具
     private View coverView;
     private LinearLayout drawerLayout;
-    private BottomSheetBehavior<View> behavior;
+    private LinearLayout addMemberLayout;
+    private BottomSheetBehavior<View> behavior, behavior2;
     private Button chatUtils;
-    private LinearLayout locationShare;
+    private LinearLayout locationShare, addMembers, sendImage;
 
     private ImageView aiEnable;
     private Boolean isAiEnable = true;
 
+    private ActivityResultLauncher<Intent> imagePickerLauncher;
     private final List<EMMessage> messages = new ArrayList<>();
-    //    private final LimitedMessageList<Message> conversationHistory = new LimitedMessageList<>(15);
     private final LimitedMessageList<String> conversationHistory = new LimitedMessageList<>(15);
     private String model = "doubao-1-5-pro-32k-250115";
     private int MODEL_FLAG = 0; // 0: Doubao 1: Qwen 2: Deepseek
@@ -183,6 +202,19 @@ public class ChatActivity extends AppCompatActivity {
                 Type type = TypeToken.getParameterized(List.class, UserInfo.class).getType();
                 userInfoList = gson.fromJson(intent.getStringExtra("userInfoList"), type);
                 userConversation = gson.fromJson(intent.getStringExtra("userConversation"), UserConversation.class);
+                // 根据群组 ID 从服务器获取群组详情。
+                EMClient.getInstance().groupManager().asyncGetGroupFromServer(GROUP_ID, new EMValueCallBack<EMGroup>() {
+                    @Override
+                    public void onSuccess(EMGroup emGroup) {
+                        currentEmGroup = emGroup;
+                    }
+
+                    @Override
+                    public void onError(int i, String s) {
+
+                    }
+                });
+
                 initView();
                 setData();
             }
@@ -204,6 +236,100 @@ public class ChatActivity extends AppCompatActivity {
         for (EMMessage message : messages) {
             chatAdapter.addMessage(message);
         }
+        // 注册图片选择器的结果回调
+        imagePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                        Uri selectedImageUri = result.getData().getData();
+                        Log.i(TAG, "Selected image URI: " + selectedImageUri); // 这样获取的不是真实图片路径
+
+                        // 将图片加载到ImageView中
+//                        Glide.with(getApplicationContext())
+//                                .load(selectedImageUri)
+//                                .placeholder(R.drawable.headimg)  // 设置占位图
+//                                .into((ImageView) findViewById(R.id.img));
+//                        String realPath = Utils.getRealPathFromUri(this, selectedImageUri);
+                        File file = Utils.getFileFromUri(selectedImageUri,this);
+                        Log.i(TAG, "realPath: " + file.getAbsolutePath());
+//                        Log.i(TAG, "realPath111: " + realPath);
+                        EMMessage message = EMMessage.createImageSendMessage(file.getAbsolutePath(), false, CHAT_TYPE == SINGLE_TYPE ? TOUSER : GROUP_ID);
+                        if (CHAT_TYPE == SINGLE_TYPE) {
+                            message.setChatType(EMMessage.ChatType.Chat);
+                        } else {
+                            message.setChatType(EMMessage.ChatType.GroupChat);
+                        }
+                        runOnUiThread(() -> {
+                            behavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+                            coverView.setVisibility(View.GONE);
+                        });
+                        message.setMessageStatusCallback(new EMCallBack() {
+                            @Override
+                            public void onSuccess() {
+                                Log.i(TAG, "发送图片成功");
+                                // 发送消息成功 通知服务器
+                                ClientPush clientPush;
+                                String serverAPI;
+                                if (CHAT_TYPE == SINGLE_TYPE) {
+                                    clientPush = new ClientPush(MainActivity.USER_ID,
+                                            MainActivity.user.getUserName(),
+                                            userInfo.getUserId(),
+                                            MainActivity.user.getUserName(),
+                                            "[图片]",
+                                            null);
+                                    serverAPI = "clientMsgPush";
+                                }
+                                else {
+                                    clientPush = new ClientPush(MainActivity.USER_ID,
+                                            MainActivity.user.getUserName(),
+                                            GROUP_ID,
+                                            userConversation.getGroupName(),
+                                            MainActivity.user.getUserName() + "：[图片]",
+                                            null);
+                                    serverAPI = "clientGroupMsgPush";
+                                }
+                                RequestBody requestBody = RequestBody.create(
+                                        gson.toJson(clientPush),
+                                        MediaType.parse("application/json; charset=utf-8")
+                                );
+                                Request request = new Request.Builder()
+                                        .url("http://" + MainActivity.IP + "/lvtu/push/" + serverAPI)
+                                        .post(requestBody)
+                                        .build();
+                                try (Response response = okHttpClient.newCall(request).execute()) {
+                                    if (response.isSuccessful() && response.body() != null) {
+                                        String responseData = response.body().string();
+                                        if (!responseData.isEmpty()) {
+                                            Log.i(TAG, "responseData: " + responseData);
+                                        } else {
+                                            Log.e(TAG, "返回数据为null");
+                                        }
+                                    } else {
+                                        Log.e(TAG, "请求失败 code:" + response.code());
+                                    }
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
+
+                            @Override
+                            public void onError(int code, String error) {
+                                // 发送消息失败
+                                Log.e(TAG, "发送图片失败 code:"+code+" error:"+error);
+                                Utils.showToast(ChatActivity.this, "图片发送失败", Toast.LENGTH_SHORT);
+                            }
+
+                            @Override
+                            public void onProgress(int progress, String status) {
+//                                Log.i(TAG, "图片发送中");
+                            }
+
+                        });
+                        // 发送消息
+                        EMClient.getInstance().chatManager().sendMessage(message);
+                    }
+                }
+        );
     }
 
     private void setData() {
@@ -239,13 +365,15 @@ public class ChatActivity extends AppCompatActivity {
                 .load(R.mipmap.huahuo1)
                 .placeholder(R.drawable.headimg)
                 .into(aiImg);
-
+        addMembers = findViewById(R.id.drawer_chat_utils_image_2);
+        sendImage = findViewById(R.id.drawer_chat_utils_image_3);
         if (CHAT_TYPE == SINGLE_TYPE) {
             findViewById(R.id.user_info).setOnClickListener(v -> {
                 Intent intent = new Intent(ChatActivity.this, UserInfoActivity.class);
                 intent.putExtra("userInfo", gson.toJson(userInfo));
                 startActivity(intent);
             });
+            addMembers.setVisibility(View.GONE);
         }
         avatar = findViewById(R.id.avatar);
         userName = findViewById(R.id.user_name);
@@ -310,15 +438,21 @@ public class ChatActivity extends AppCompatActivity {
         });
 
         drawerLayout = findViewById(R.id.drawer_utils);
+        addMemberLayout = findViewById(R.id.addable_user_ly);
         behavior = BottomSheetBehavior.from(drawerLayout);
+        behavior2 = BottomSheetBehavior.from(addMemberLayout);
         coverView = findViewById(R.id.cover_view);
         chatUtils = findViewById(R.id.open_utils);
         locationShare = findViewById(R.id.drawer_chat_utils_image_1);
         //隐藏底部抽屉
         behavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        behavior2.setState(BottomSheetBehavior.STATE_HIDDEN);
+
         int height = getResources().getDisplayMetrics().heightPixels;
         behavior.setExpandedOffset(height - Utils.dpToPx(250, this));
+        behavior2.setExpandedOffset(height - Utils.dpToPx(500, this));
         behavior.setHalfExpandedRatio(Utils.ratio(Utils.dpToPx(250, this), height));
+        behavior2.setHalfExpandedRatio(Utils.ratio(Utils.dpToPx(500, this), height));
         behavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
             public void onStateChanged(@NotNull View bottomSheet, int newState) {
@@ -328,6 +462,56 @@ public class ChatActivity extends AppCompatActivity {
                         break;
                     case BottomSheetBehavior.STATE_COLLAPSED:
 
+                        break;
+                    case BottomSheetBehavior.STATE_DRAGGING:
+
+                        break;
+                    case BottomSheetBehavior.STATE_SETTLING:
+
+                        break;
+                    case BottomSheetBehavior.STATE_EXPANDED:
+
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+
+            }
+        });
+        behavior2.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NotNull View bottomSheet, int newState) {
+                switch (newState) {
+                    case BottomSheetBehavior.STATE_HIDDEN:
+//                        coverView.setVisibility(View.GONE);
+                        break;
+                    case BottomSheetBehavior.STATE_COLLAPSED:
+                        // 展开
+                        new Thread(() -> {
+                            // http://localhost:8080/lvtu/user/getMutualFollowUser?userId=b52e89c9-4675-42c9-8f87-a9f720a29d4b
+                            Request request = new Request.Builder()
+                                    .url("http://" + MainActivity.IP + "/lvtu/user/getMutualFollowUser?userId=" + MainActivity.USER_ID)
+                                    .build();
+                            try (Response response = okHttpClient.newCall(request).execute()) {
+                                if (response.isSuccessful()) {
+                                    String responseData = response.body().string();
+                                    if (!responseData.isEmpty()) {
+                                        List<UserInfo> userInfoList = gson.fromJson(responseData, new TypeToken<List<UserInfo>>() {
+                                        }.getType());
+                                        RecyclerView addableMember = findViewById(R.id.addable_user);
+                                        InviteUserAdapter adapter = new InviteUserAdapter(userInfoList, ChatActivity.this, userConversation.getMembers(), new InviteUserListener());
+                                        addableMember.setLayoutManager(new LinearLayoutManager(ChatActivity.this));
+                                        addableMember.setAdapter(adapter);
+                                    }
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }).start();
                         break;
                     case BottomSheetBehavior.STATE_DRAGGING:
 
@@ -439,6 +623,20 @@ public class ChatActivity extends AppCompatActivity {
             behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             coverView.setVisibility(View.VISIBLE);
         });
+        addMembers.setOnClickListener(v -> {
+            if (!USER.equals(currentEmGroup.getOwner())) {
+                Utils.showToast(this, "只有群主才能邀请成员", Toast.LENGTH_SHORT);
+            } else {
+                behavior2.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                coverView.setVisibility(View.VISIBLE);
+            }
+        });
+        sendImage.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            intent.setType("image/*");
+            // 启动图片选择器并等待结果
+            imagePickerLauncher.launch(intent);
+        });
         locationShare.setOnClickListener(v -> {
             Intent intent = new Intent(this, LocationShareActivity.class);
             intent.putExtra("userInfoList", gson.toJson(userInfoList));
@@ -457,42 +655,81 @@ public class ChatActivity extends AppCompatActivity {
             // 收到消息，遍历消息队列，解析和显示。
             @Override
             public void onMessageReceived(List<EMMessage> messages) {
-                StringBuilder toAIContentBuilder = new StringBuilder();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (EMMessage message : messages) {
-                            chatAdapter.addMessage(message);
-                            layoutManager.scrollToPositionWithOffset(chatAdapter.getItemCount() - 1, 0);
-                        }
-                    }
-                });
                 for (EMMessage message : messages) {
-                    String content = Utils.absContent(message.getBody().toString());
-                    if (message.getFrom().equals(USER)) {
-                        toAIContentBuilder.append("[主人]");
-                    } else {
-                        toAIContentBuilder.append("[网友]");
-                    }
-                    toAIContentBuilder.append(message.getFrom()).append("：“").append(content).append("”");
-                }
-                conversationHistory.add(toAIContentBuilder.toString());
+                    if (message.getType() == EMMessage.Type.TXT) {
+                        StringBuilder toAIContentBuilder = new StringBuilder();
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                chatAdapter.addMessage(message);
+                                layoutManager.scrollToPositionWithOffset(chatAdapter.getItemCount() - 1, 0);
+                            }
+                        });
+                        String content = Utils.absContent(message.getBody().toString());
+                        if (message.getFrom().equals(USER)) {
+                            toAIContentBuilder.append("[主人]");
+                        } else {
+                            toAIContentBuilder.append("[网友]");
+                        }
+                        toAIContentBuilder.append(message.getFrom()).append("：“").append(content).append("”");
+                        conversationHistory.add(toAIContentBuilder.toString());
 
-                if (isAiEnable) {
-                    // AI分析
-                    String resultText;
-                    if (MODEL_FLAG == 0){
-                        resultText = callDouBao();
-                    } else {
-                        resultText = callQWen();
-                    }
-                    String resultStr = "[助手]问问：”" + resultText + "”";
-                    conversationHistory.add(resultStr);
-                    runOnUiThread(() -> {
-                        Log.i(TAG, "AI分析结果：" + resultText);
-                        aiTv.setText(resultText);
-                    });
+                        if (isAiEnable) {
+                            // AI分析
+                            String resultText;
+                            if (MODEL_FLAG == 0) {
+                                resultText = callDouBao();
+                            } else {
+                                resultText = callQWen();
+                            }
+                            String resultStr = "[助手]问问：”" + resultText + "”";
+                            conversationHistory.add(resultStr);
+                            runOnUiThread(() -> {
+                                Log.i(TAG, "AI分析结果：" + resultText);
+                                aiTv.setText(resultText);
+                            });
 
+                        }
+                    } else if (message.getType() == EMMessage.Type.IMAGE) {
+                        message.setMessageStatusCallback(new EMCallBack() {
+                            @Override
+                            public void onSuccess() {
+                                // 附件下载成功
+                                Log.i(TAG, "附件下载成功");
+//                                EMImageMessageBody imgBody = (EMImageMessageBody) message.getBody();
+//                                // 从服务器端获取图片文件。
+//                                String imgRemoteUrl = imgBody.getRemoteUrl();
+//                                // 从服务器端获取图片缩略图。
+//                                String thumbnailUrl = imgBody.getThumbnailUrl();
+//                                // 从本地获取图片文件。
+//                                Uri imgLocalUri = imgBody.getLocalUri();
+//                                // 从本地获取图片缩略图。
+//                                Uri thumbnailLocalUri = imgBody.thumbnailLocalUri();
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        chatAdapter.addMessage(message);
+                                        layoutManager.scrollToPositionWithOffset(chatAdapter.getItemCount() - 1, 0);
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void onError(int code, String error) {
+                                // 附件下载失败
+                                Log.i(TAG, "附件下载失败");
+                            }
+
+                            @Override
+                            public void onProgress(int progress, String status) {
+                                // 附件下载进度
+                                Log.i(TAG, "附件下载进度：" + progress);
+                            }
+
+                        });
+                        // 下载附件
+                        EMClient.getInstance().chatManager().downloadAttachment(message);
+                    }
                 }
             }
         };
@@ -509,8 +746,15 @@ public class ChatActivity extends AppCompatActivity {
                     // 获取触摸点的坐标
                     float x = event.getX();
                     float y = event.getY();
-                    // 判断触摸点是否在抽屉1区域内
-                    if (behavior.getState() != BottomSheetBehavior.STATE_HIDDEN) {
+                    // 判断触摸点是否在抽屉2区域内
+                    if (behavior2.getState() != BottomSheetBehavior.STATE_HIDDEN) {
+                        if (!isPointInsideView(addMemberLayout, x, y)) {
+                            if (behavior2 != null) {
+                                Log.i(TAG, "behavior.getState():" + "隐藏");
+                                behavior2.setState(BottomSheetBehavior.STATE_HIDDEN);
+                            }
+                        }
+                    } else if (behavior.getState() != BottomSheetBehavior.STATE_HIDDEN) {
                         if (!isPointInsideView(drawerLayout, x, y)) {
                             if (behavior != null) {
                                 Log.i(TAG, "behavior.getState():" + "隐藏");
@@ -553,6 +797,15 @@ public class ChatActivity extends AppCompatActivity {
                     layoutParams.bottomMargin = 0;
                 }
                 mChatInputPanel.setLayoutParams(layoutParams);
+            }
+        });
+
+        refreshLayout = findViewById(R.id.refreshLayout);
+        // 设置加载更多监听器
+        refreshLayout.setOnRefreshListener(new OnRefreshListener() {
+            @Override
+            public void onRefresh(@NonNull RefreshLayout refreshLayout) {
+                loadMoreMessages();
             }
         });
     }
@@ -664,6 +917,7 @@ public class ChatActivity extends AppCompatActivity {
         if (conversation != null) {
             messages.clear(); // 清空现有消息列表
             List<EMMessage> loadedMessages = conversation.loadMoreMsgFromDB(null, 15);
+            starMsgId = loadedMessages.get(0).getMsgId();
             messages.addAll(loadedMessages);
             recyclerViewChat.scrollToPosition(chatAdapter.getItemCount() - 1); // 滚动到最新消息
             for (EMMessage message : messages) {
@@ -685,10 +939,31 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
+    private void loadMoreMessages() {
+        if (conversation != null) {
+            List<EMMessage> loadedMessages = conversation.loadMoreMsgFromDB(starMsgId, 25);
+            if (loadedMessages.size() > 0) {
+                starMsgId = loadedMessages.get(0).getMsgId();
+                chatAdapter.addHistory(loadedMessages);
+                refreshLayout.finishRefresh();
+            } else {
+                refreshLayout.finishRefreshWithNoMoreData();
+            }
+        }
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         // 注销消息监听
         EMClient.getInstance().chatManager().removeMessageListener(msgListener);
+    }
+
+    public class InviteUserListener {
+        public void onInviteeSuccess(UserInfo newUserInfo) {
+            Log.i(TAG, "invited:" + newUserInfo.getUserId());
+            userInfoList.add(newUserInfo);
+            chatAdapter.notifyItemInserted(userInfoList.size() - 1);
+        }
     }
 }
